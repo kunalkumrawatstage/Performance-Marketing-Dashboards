@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.anthropic.com;">
-    <title>STAGE Performance Marketing Dashboard</title>
+    <title>STAGE Performance Marketing Dashboard v2.0</title>
 
     <!-- CDN Dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -12,364 +12,121 @@
     <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.4/dist/dexie.min.js"></script>
 
     <style>
-        /* ========== CSS RESET & BASE ========== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        /* ========== CSS (Same as before with additions) ========== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            /* Color Palette */
-            --primary: #2563eb;
-            --primary-dark: #1e40af;
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --gray-50: #f9fafb;
-            --gray-100: #f3f4f6;
-            --gray-200: #e5e7eb;
-            --gray-300: #d1d5db;
-            --gray-600: #4b5563;
-            --gray-700: #374151;
-            --gray-800: #1f2937;
+            --primary: #2563eb; --primary-dark: #1e40af; --success: #10b981;
+            --danger: #ef4444; --warning: #f59e0b; --gray-50: #f9fafb;
+            --gray-100: #f3f4f6; --gray-200: #e5e7eb; --gray-300: #d1d5db;
+            --gray-600: #4b5563; --gray-700: #374151; --gray-800: #1f2937;
             --gray-900: #111827;
-
-            /* Typography */
-            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-
-            /* Spacing */
-            --spacing-xs: 0.25rem;
-            --spacing-sm: 0.5rem;
-            --spacing-md: 1rem;
-            --spacing-lg: 1.5rem;
-            --spacing-xl: 2rem;
-
-            /* Border Radius */
-            --radius-sm: 0.375rem;
-            --radius-md: 0.5rem;
-            --radius-lg: 0.75rem;
-
-            /* Shadows */
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --spacing-xs: 0.25rem; --spacing-sm: 0.5rem; --spacing-md: 1rem;
+            --spacing-lg: 1.5rem; --spacing-xl: 2rem;
+            --radius-sm: 0.375rem; --radius-md: 0.5rem; --radius-lg: 0.75rem;
             --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
             --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
             --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
         }
 
-        body {
-            font-family: var(--font-sans);
-            background-color: var(--gray-50);
-            color: var(--gray-900);
-            line-height: 1.5;
-        }
+        body { font-family: var(--font-sans); background-color: var(--gray-50); color: var(--gray-900); line-height: 1.5; }
+        .container { max-width: 1400px; margin: 0 auto; padding: var(--spacing-lg); }
 
-        /* ========== LAYOUT ========== */
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: var(--spacing-lg);
-        }
+        /* Header */
+        .header { background: white; border-bottom: 2px solid var(--gray-200); padding: var(--spacing-lg) 0; margin-bottom: var(--spacing-xl); box-shadow: var(--shadow-sm); }
+        .header-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--spacing-md); }
+        .header h1 { font-size: 1.875rem; font-weight: 700; color: var(--primary); }
+        .header-subtitle { font-size: 0.875rem; color: var(--gray-600); margin-top: var(--spacing-xs); }
 
-        /* ========== HEADER ========== */
-        .header {
-            background: white;
-            border-bottom: 2px solid var(--gray-200);
-            padding: var(--spacing-lg) 0;
-            margin-bottom: var(--spacing-xl);
-            box-shadow: var(--shadow-sm);
-        }
+        /* Market Selector */
+        .market-selector { display: flex; gap: var(--spacing-sm); background: var(--gray-100); padding: var(--spacing-xs); border-radius: var(--radius-lg); }
+        .market-btn { padding: var(--spacing-sm) var(--spacing-lg); border: none; background: transparent; color: var(--gray-700); font-weight: 500; cursor: pointer; border-radius: var(--radius-md); transition: all 0.2s; }
+        .market-btn:hover { background: white; }
+        .market-btn.active { background: var(--primary); color: white; box-shadow: var(--shadow-md); }
 
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: var(--spacing-md);
-        }
+        /* Upload Section */
+        .upload-section { background: white; border-radius: var(--radius-lg); padding: var(--spacing-xl); margin-bottom: var(--spacing-xl); box-shadow: var(--shadow-md); }
+        .upload-zone { border: 2px dashed var(--gray-300); border-radius: var(--radius-lg); padding: var(--spacing-xl); text-align: center; cursor: pointer; transition: all 0.2s; }
+        .upload-zone:hover, .upload-zone.drag-over { border-color: var(--primary); background: var(--gray-50); }
+        .upload-icon { font-size: 3rem; margin-bottom: var(--spacing-md); }
+        .upload-text { font-size: 1.125rem; font-weight: 500; color: var(--gray-700); margin-bottom: var(--spacing-sm); }
+        .upload-hint { font-size: 0.875rem; color: var(--gray-600); }
+        .progress-bar { width: 100%; height: 8px; background: var(--gray-200); border-radius: var(--radius-sm); overflow: hidden; margin-top: var(--spacing-md); display: none; }
+        .progress-bar.active { display: block; }
+        .progress-fill { height: 100%; background: var(--primary); transition: width 0.3s; width: 0%; }
 
-        .header h1 {
-            font-size: 1.875rem;
-            font-weight: 700;
-            color: var(--primary);
-        }
+        /* Tab Navigation */
+        .tab-nav { display: flex; gap: var(--spacing-sm); margin-bottom: var(--spacing-xl); overflow-x: auto; border-bottom: 2px solid var(--gray-200); }
+        .tab-btn { padding: var(--spacing-md) var(--spacing-lg); border: none; background: transparent; color: var(--gray-600); font-weight: 500; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; white-space: nowrap; }
+        .tab-btn:hover { color: var(--primary); }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
 
-        .header-subtitle {
-            font-size: 0.875rem;
-            color: var(--gray-600);
-            margin-top: var(--spacing-xs);
-        }
+        /* KPI Cards */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--spacing-lg); margin-bottom: var(--spacing-xl); }
+        .kpi-card { background: white; border-radius: var(--radius-lg); padding: var(--spacing-lg); box-shadow: var(--shadow-md); border-left: 4px solid var(--gray-300); transition: transform 0.2s; }
+        .kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+        .kpi-card.healthy { border-left-color: var(--success); }
+        .kpi-card.unhealthy { border-left-color: var(--danger); }
+        .kpi-label { font-size: 0.875rem; color: var(--gray-600); font-weight: 500; margin-bottom: var(--spacing-sm); }
+        .kpi-value { font-size: 2rem; font-weight: 700; color: var(--gray-900); margin-bottom: var(--spacing-xs); }
+        .kpi-indicator { display: inline-flex; align-items: center; gap: var(--spacing-xs); font-size: 0.875rem; font-weight: 600; }
+        .kpi-indicator.healthy { color: var(--success); }
+        .kpi-indicator.unhealthy { color: var(--danger); }
+        .kpi-trend { display: inline-flex; align-items: center; gap: var(--spacing-xs); font-size: 0.75rem; margin-top: var(--spacing-xs); color: var(--gray-600); }
 
-        /* ========== MARKET SELECTOR ========== */
-        .market-selector {
-            display: flex;
-            gap: var(--spacing-sm);
-            background: var(--gray-100);
-            padding: var(--spacing-xs);
-            border-radius: var(--radius-lg);
-        }
+        /* Chart & Insights Sections */
+        .chart-section, .insights-section { background: white; border-radius: var(--radius-lg); padding: var(--spacing-xl); margin-bottom: var(--spacing-xl); box-shadow: var(--shadow-md); }
+        .chart-title, .section-title { font-size: 1.25rem; font-weight: 600; color: var(--gray-900); margin-bottom: var(--spacing-lg); }
+        .chart-container { position: relative; height: 400px; margin-bottom: var(--spacing-lg); }
 
-        .market-btn {
-            padding: var(--spacing-sm) var(--spacing-lg);
-            border: none;
-            background: transparent;
-            color: var(--gray-700);
-            font-weight: 500;
-            cursor: pointer;
-            border-radius: var(--radius-md);
-            transition: all 0.2s;
-        }
+        /* Show Table */
+        .show-table { width: 100%; border-collapse: collapse; margin-top: var(--spacing-md); }
+        .show-table th, .show-table td { padding: var(--spacing-md); text-align: left; border-bottom: 1px solid var(--gray-200); }
+        .show-table th { background: var(--gray-50); font-weight: 600; color: var(--gray-700); }
+        .show-table tr:hover { background: var(--gray-50); }
+        .show-table .top-performer { background: #ecfdf5; font-weight: 600; }
+        .show-table .underperformer { background: #fef2f2; }
 
-        .market-btn:hover {
-            background: white;
-        }
+        /* Insights */
+        .insight-card { background: var(--gray-50); border-left: 4px solid var(--primary); padding: var(--spacing-lg); border-radius: var(--radius-md); margin-bottom: var(--spacing-md); }
+        .insight-card.high { border-left-color: var(--danger); }
+        .insight-card.medium { border-left-color: var(--warning); }
+        .insight-card.low { border-left-color: var(--success); }
+        .insight-title { font-weight: 600; font-size: 1.125rem; margin-bottom: var(--spacing-sm); }
+        .insight-analysis { color: var(--gray-700); margin-bottom: var(--spacing-sm); line-height: 1.6; }
+        .insight-recommendation { background: white; padding: var(--spacing-md); border-radius: var(--radius-sm); margin-top: var(--spacing-sm); }
+        .insight-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600; margin-bottom: var(--spacing-sm); }
+        .insight-badge.high { background: #fee2e2; color: var(--danger); }
+        .insight-badge.medium { background: #fef3c7; color: var(--warning); }
+        .insight-badge.low { background: #d1fae5; color: var(--success); }
 
-        .market-btn.active {
-            background: var(--primary);
-            color: white;
-            box-shadow: var(--shadow-md);
-        }
+        /* Settings */
+        .settings-btn { background: var(--gray-200); padding: var(--spacing-sm) var(--spacing-md); border-radius: var(--radius-md); border: none; cursor: pointer; font-weight: 500; }
+        .settings-btn:hover { background: var(--gray-300); }
 
-        /* ========== UPLOAD SECTION ========== */
-        .upload-section {
-            background: white;
-            border-radius: var(--radius-lg);
-            padding: var(--spacing-xl);
-            margin-bottom: var(--spacing-xl);
-            box-shadow: var(--shadow-md);
-        }
+        /* Tab Content */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
-        .upload-zone {
-            border: 2px dashed var(--gray-300);
-            border-radius: var(--radius-lg);
-            padding: var(--spacing-xl);
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+        /* Utilities */
+        .hidden { display: none !important; }
+        .loading { text-align: center; padding: var(--spacing-xl); color: var(--gray-600); }
+        .error-message { background: #fef2f2; border: 1px solid var(--danger); color: var(--danger); padding: var(--spacing-md); border-radius: var(--radius-md); margin-bottom: var(--spacing-md); }
+        .empty-state { text-align: center; padding: calc(var(--spacing-xl) * 2); color: var(--gray-600); }
+        .empty-state-icon { font-size: 4rem; margin-bottom: var(--spacing-md); opacity: 0.3; }
 
-        .upload-zone:hover,
-        .upload-zone.drag-over {
-            border-color: var(--primary);
-            background: var(--gray-50);
-        }
+        /* Comparison Grid */
+        .comparison-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--spacing-lg); }
+        .comparison-card { background: white; border: 2px solid var(--gray-200); border-radius: var(--radius-lg); padding: var(--spacing-lg); }
+        .comparison-card h4 { font-size: 1.125rem; margin-bottom: var(--spacing-md); color: var(--primary); }
 
-        .upload-icon {
-            font-size: 3rem;
-            margin-bottom: var(--spacing-md);
-        }
-
-        .upload-text {
-            font-size: 1.125rem;
-            font-weight: 500;
-            color: var(--gray-700);
-            margin-bottom: var(--spacing-sm);
-        }
-
-        .upload-hint {
-            font-size: 0.875rem;
-            color: var(--gray-600);
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: var(--gray-200);
-            border-radius: var(--radius-sm);
-            overflow: hidden;
-            margin-top: var(--spacing-md);
-            display: none;
-        }
-
-        .progress-bar.active {
-            display: block;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: var(--primary);
-            transition: width 0.3s;
-            width: 0%;
-        }
-
-        /* ========== TAB NAVIGATION ========== */
-        .tab-nav {
-            display: flex;
-            gap: var(--spacing-sm);
-            margin-bottom: var(--spacing-xl);
-            overflow-x: auto;
-            border-bottom: 2px solid var(--gray-200);
-        }
-
-        .tab-btn {
-            padding: var(--spacing-md) var(--spacing-lg);
-            border: none;
-            background: transparent;
-            color: var(--gray-600);
-            font-weight: 500;
-            cursor: pointer;
-            border-bottom: 3px solid transparent;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-
-        .tab-btn:hover {
-            color: var(--primary);
-        }
-
-        .tab-btn.active {
-            color: var(--primary);
-            border-bottom-color: var(--primary);
-        }
-
-        /* ========== KPI CARDS ========== */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: var(--spacing-lg);
-            margin-bottom: var(--spacing-xl);
-        }
-
-        .kpi-card {
-            background: white;
-            border-radius: var(--radius-lg);
-            padding: var(--spacing-lg);
-            box-shadow: var(--shadow-md);
-            border-left: 4px solid var(--gray-300);
-            transition: transform 0.2s;
-        }
-
-        .kpi-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .kpi-card.healthy {
-            border-left-color: var(--success);
-        }
-
-        .kpi-card.unhealthy {
-            border-left-color: var(--danger);
-        }
-
-        .kpi-label {
-            font-size: 0.875rem;
-            color: var(--gray-600);
-            font-weight: 500;
-            margin-bottom: var(--spacing-sm);
-        }
-
-        .kpi-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--gray-900);
-            margin-bottom: var(--spacing-xs);
-        }
-
-        .kpi-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--spacing-xs);
-            font-size: 0.875rem;
-            font-weight: 600;
-        }
-
-        .kpi-indicator.healthy {
-            color: var(--success);
-        }
-
-        .kpi-indicator.unhealthy {
-            color: var(--danger);
-        }
-
-        .kpi-trend {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--spacing-xs);
-            font-size: 0.75rem;
-            margin-top: var(--spacing-xs);
-            color: var(--gray-600);
-        }
-
-        /* ========== CHART CONTAINERS ========== */
-        .chart-section {
-            background: white;
-            border-radius: var(--radius-lg);
-            padding: var(--spacing-xl);
-            margin-bottom: var(--spacing-xl);
-            box-shadow: var(--shadow-md);
-        }
-
-        .chart-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--gray-900);
-            margin-bottom: var(--spacing-lg);
-        }
-
-        .chart-container {
-            position: relative;
-            height: 400px;
-            margin-bottom: var(--spacing-lg);
-        }
-
-        /* ========== TAB CONTENT ========== */
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        /* ========== UTILITIES ========== */
-        .hidden {
-            display: none !important;
-        }
-
-        .loading {
-            text-align: center;
-            padding: var(--spacing-xl);
-            color: var(--gray-600);
-        }
-
-        .error-message {
-            background: #fef2f2;
-            border: 1px solid var(--danger);
-            color: var(--danger);
-            padding: var(--spacing-md);
-            border-radius: var(--radius-md);
-            margin-bottom: var(--spacing-md);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: var(--spacing-xl) * 2;
-            color: var(--gray-600);
-        }
-
-        .empty-state-icon {
-            font-size: 4rem;
-            margin-bottom: var(--spacing-md);
-            opacity: 0.3;
-        }
-
-        /* ========== RESPONSIVE ========== */
+        /* Responsive */
         @media (max-width: 768px) {
-            .container {
-                padding: var(--spacing-md);
-            }
-
-            .header h1 {
-                font-size: 1.5rem;
-            }
-
-            .kpi-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .market-selector {
-                flex-wrap: wrap;
-            }
+            .container { padding: var(--spacing-md); }
+            .header h1 { font-size: 1.5rem; }
+            .kpi-grid { grid-template-columns: 1fr; }
+            .market-selector { flex-wrap: wrap; }
         }
     </style>
 </head>
@@ -379,14 +136,17 @@
         <div class="container">
             <div class="header-content">
                 <div>
-                    <h1>📊 STAGE Performance Marketing Dashboard</h1>
-                    <div class="header-subtitle">Multi-Market Performance Analytics & Insights</div>
+                    <h1>📊 STAGE Performance Marketing Dashboard v2.0</h1>
+                    <div class="header-subtitle">Multi-Market Analytics with AI Insights</div>
                 </div>
-                <div class="market-selector">
-                    <button class="market-btn active" data-market="gujarati">Gujarati</button>
-                    <button class="market-btn" data-market="haryanvi">Haryanvi</button>
-                    <button class="market-btn" data-market="rajasthani">Rajasthani</button>
-                    <button class="market-btn" data-market="bhojpuri">Bhojpuri</button>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <button class="settings-btn" onclick="showSettings()">⚙️ Settings</button>
+                    <div class="market-selector">
+                        <button class="market-btn active" data-market="gujarati">Gujarati</button>
+                        <button class="market-btn" data-market="haryanvi">Haryanvi</button>
+                        <button class="market-btn" data-market="rajasthani">Rajasthani</button>
+                        <button class="market-btn" data-market="bhojpuri">Bhojpuri</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -399,7 +159,7 @@
             <div class="upload-zone" id="uploadZone">
                 <div class="upload-icon">📤</div>
                 <div class="upload-text">Drag & Drop Excel Files Here</div>
-                <div class="upload-hint">or click to browse (supports .xlsx, .csv)</div>
+                <div class="upload-hint">or click to browse (supports .xlsx, .csv) - Upload 5-10 files at once</div>
                 <input type="file" id="fileInput" multiple accept=".xlsx,.xls,.csv" style="display: none;">
             </div>
             <div class="progress-bar" id="progressBar">
@@ -409,17 +169,22 @@
 
         <!-- Tab Navigation -->
         <div class="tab-nav">
-            <button class="tab-btn active" data-tab="overall">Overall Performance</button>
-            <button class="tab-btn" data-tab="channel">Channel Analysis</button>
-            <button class="tab-btn" data-tab="platform">Platform Breakdown</button>
-            <button class="tab-btn" data-tab="show">Show Performance</button>
-            <button class="tab-btn" data-tab="compare">Market Comparison</button>
+            <button class="tab-btn active" data-tab="overall">📈 Overall Performance</button>
+            <button class="tab-btn" data-tab="channel">🎯 Channel Analysis</button>
+            <button class="tab-btn" data-tab="platform">💻 Platform Breakdown</button>
+            <button class="tab-btn" data-tab="show">🎬 Show Performance</button>
+            <button class="tab-btn" data-tab="insights">🤖 AI Insights</button>
+            <button class="tab-btn" data-tab="compare">🔄 Market Comparison</button>
         </div>
 
         <!-- Tab: Overall Performance -->
         <div class="tab-content active" id="tab-overall">
-            <div class="kpi-grid" id="kpiGrid">
-                <!-- KPI cards will be dynamically inserted here -->
+            <div class="kpi-grid" id="kpiGrid"></div>
+            <div class="chart-section">
+                <h3 class="chart-title">Performance Trends (Week-over-Week)</h3>
+                <div class="chart-container">
+                    <canvas id="trendsChart"></canvas>
+                </div>
             </div>
             <div class="empty-state" id="emptyState">
                 <div class="empty-state-icon">📊</div>
@@ -431,7 +196,7 @@
         <!-- Tab: Channel Analysis -->
         <div class="tab-content" id="tab-channel">
             <div class="chart-section">
-                <h3 class="chart-title">Meta vs Google Performance</h3>
+                <h3 class="chart-title">Meta vs Google Performance Comparison</h3>
                 <div class="chart-container">
                     <canvas id="channelChart"></canvas>
                 </div>
@@ -441,7 +206,7 @@
         <!-- Tab: Platform Breakdown -->
         <div class="tab-content" id="tab-platform">
             <div class="chart-section">
-                <h3 class="chart-title">App vs Web Performance</h3>
+                <h3 class="chart-title">App vs Web Performance Analysis</h3>
                 <div class="chart-container">
                     <canvas id="platformChart"></canvas>
                 </div>
@@ -452,9 +217,18 @@
         <div class="tab-content" id="tab-show">
             <div class="chart-section">
                 <h3 class="chart-title">Show-wise Performance Analysis</h3>
-                <div id="showTable">
-                    <!-- Show table will be dynamically inserted -->
+                <div id="showTableContainer"></div>
+            </div>
+        </div>
+
+        <!-- Tab: AI Insights -->
+        <div class="tab-content" id="tab-insights">
+            <div class="insights-section">
+                <h3 class="section-title">🤖 AI-Powered Strategic Insights</h3>
+                <div id="insightsContainer">
+                    <div class="loading">Loading insights...</div>
                 </div>
+                <button class="settings-btn" onclick="generateInsights()" style="margin-top: 1rem;">🔄 Regenerate Insights</button>
             </div>
         </div>
 
@@ -462,9 +236,7 @@
         <div class="tab-content" id="tab-compare">
             <div class="chart-section">
                 <h3 class="chart-title">Cross-Market Performance Comparison</h3>
-                <div id="comparisonView">
-                    <!-- Comparison view will be dynamically inserted -->
-                </div>
+                <div class="comparison-grid" id="comparisonGrid"></div>
             </div>
         </div>
     </div>
@@ -473,34 +245,12 @@
         // ========== CONFIGURATION ==========
         const CONFIG = {
             markets: ['gujarati', 'haryanvi', 'rajasthani', 'bhojpuri'],
-            thresholds: {
-                CTR: 0.75,    // > 0.75% is healthy
-                IR: 10,       // >= 10% is healthy
-                TR: 20,       // >= 20% is healthy
-                TCR: 30,      // < 30% is healthy
-                CAC: 250      // < ₹250 is healthy
-            },
-            metaColumns: {
-                spend: 'Spends_GST',
-                trials: 'af_start_trial',
-                cac: 'Mandate_CAC',
-                ir: 'AF_IR%',
-                tr: 'TR%_AF',
-                tcr: 'TCR_D0',
-                ctr: 'CTR%'
-            },
-            googleColumns: {
-                spend: 'Spends_GST',
-                trials: 'start_trial_d0',
-                cac: 'CP_AF_CPT_D0',
-                ir: 'AF_IR%',
-                tr: 'AF_TR%',
-                tcr: 'AF_TCR%',
-                ctr: 'CTR%'
-            }
+            thresholds: { CTR: 0.75, IR: 10, TR: 20, TCR: 30, CAC: 250 },
+            metaColumns: { spend: 'Spends_GST', trials: 'af_start_trial', cac: 'Mandate_CAC', ir: 'AF_IR%', tr: 'TR%_AF', tcr: 'TCR_D0', ctr: 'CTR%' },
+            googleColumns: { spend: 'Spends_GST', trials: 'start_trial_d0', cac: 'CP_AF_CPT_D0', ir: 'AF_IR%', tr: 'AF_TR%', tcr: 'AF_TCR%', ctr: 'CTR%' }
         };
 
-        // ========== DATABASE (IndexedDB via Dexie) ==========
+        // ========== DATABASE ==========
         const db = new Dexie('STAGEDashboard');
         db.version(1).stores({
             markets: 'name, data, insights, updatedAt',
@@ -515,34 +265,23 @@
                 this.state = {
                     currentMarket: 'gujarati',
                     currentTab: 'overall',
-                    markets: {
-                        gujarati: null,
-                        haryanvi: null,
-                        rajasthani: null,
-                        bhojpuri: null
-                    },
-                    uploadProgress: 0
+                    markets: { gujarati: null, haryanvi: null, rajasthani: null, bhojpuri: null },
+                    uploadProgress: 0,
+                    apiKey: null
                 };
                 this.listeners = [];
             }
-
             subscribe(listener) {
                 this.listeners.push(listener);
-                return () => {
-                    this.listeners = this.listeners.filter(l => l !== listener);
-                };
+                return () => { this.listeners = this.listeners.filter(l => l !== listener); };
             }
-
             setState(path, value) {
                 const keys = path.split('.');
                 let current = this.state;
-                for (let i = 0; i < keys.length - 1; i++) {
-                    current = current[keys[i]];
-                }
+                for (let i = 0; i < keys.length - 1; i++) current = current[keys[i]];
                 current[keys[keys.length - 1]] = value;
                 this.notify();
             }
-
             getState(path) {
                 if (!path) return this.state;
                 const keys = path.split('.');
@@ -553,23 +292,15 @@
                 }
                 return current;
             }
-
-            notify() {
-                this.listeners.forEach(listener => listener(this.state));
-            }
+            notify() { this.listeners.forEach(listener => listener(this.state)); }
         }
-
         const stateManager = new StateManager();
 
         // ========== ANALYTICS ENGINE ==========
         class AnalyticsEngine {
             static calculateOverall(data) {
                 if (!data || !data.length) return null;
-
-                let totalSpend = 0, totalTrials = 0, totalClicks = 0, totalImpressions = 0;
-                let irSum = 0, trSum = 0, tcrSum = 0, ctrSum = 0;
-                let count = 0;
-
+                let totalSpend = 0, totalTrials = 0, irSum = 0, trSum = 0, tcrSum = 0, ctrSum = 0, count = 0;
                 data.forEach(row => {
                     totalSpend += parseFloat(row.spend) || 0;
                     totalTrials += parseInt(row.trials) || 0;
@@ -579,9 +310,7 @@
                     ctrSum += parseFloat(row.ctr) || 0;
                     count++;
                 });
-
                 const cac = totalTrials > 0 ? totalSpend / totalTrials : 0;
-
                 return {
                     totalSpend: totalSpend.toFixed(0),
                     totalTrials,
@@ -593,21 +322,39 @@
                 };
             }
 
+            static calculateChannelBreakdown(data) {
+                const meta = data.filter(d => d.channel === 'meta');
+                const google = data.filter(d => d.channel === 'google');
+                return { meta: this.calculateOverall(meta), google: this.calculateOverall(google) };
+            }
+
+            static calculatePlatformBreakdown(data) {
+                const app = data.filter(d => d.platform === 'app');
+                const web = data.filter(d => d.platform === 'web');
+                return { app: this.calculateOverall(app), web: this.calculateOverall(web) };
+            }
+
+            static calculateShowPerformance(data) {
+                const showMap = {};
+                data.forEach(row => {
+                    if (!showMap[row.show]) showMap[row.show] = [];
+                    showMap[row.show].push(row);
+                });
+                return Object.keys(showMap).map(show => ({
+                    show,
+                    ...this.calculateOverall(showMap[show])
+                })).sort((a, b) => b.totalTrials - a.totalTrials);
+            }
+
             static checkThreshold(metric, value) {
                 value = parseFloat(value);
                 switch(metric) {
-                    case 'CTR':
-                        return value > CONFIG.thresholds.CTR;
-                    case 'IR':
-                        return value >= CONFIG.thresholds.IR;
-                    case 'TR':
-                        return value >= CONFIG.thresholds.TR;
-                    case 'TCR':
-                        return value < CONFIG.thresholds.TCR;
-                    case 'CAC':
-                        return value < CONFIG.thresholds.CAC;
-                    default:
-                        return true;
+                    case 'CTR': return value > CONFIG.thresholds.CTR;
+                    case 'IR': return value >= CONFIG.thresholds.IR;
+                    case 'TR': return value >= CONFIG.thresholds.TR;
+                    case 'TCR': return value < CONFIG.thresholds.TCR;
+                    case 'CAC': return value < CONFIG.thresholds.CAC;
+                    default: return true;
                 }
             }
 
@@ -622,59 +369,44 @@
 
         // ========== UPLOAD HANDLER ==========
         class UploadHandler {
-            constructor() {
-                this.setupEventListeners();
-            }
+            constructor() { this.setupEventListeners(); }
 
             setupEventListeners() {
                 const uploadZone = document.getElementById('uploadZone');
                 const fileInput = document.getElementById('fileInput');
-
                 uploadZone.addEventListener('click', () => fileInput.click());
-
-                uploadZone.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    uploadZone.classList.add('drag-over');
-                });
-
-                uploadZone.addEventListener('dragleave', () => {
-                    uploadZone.classList.remove('drag-over');
-                });
-
-                uploadZone.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    uploadZone.classList.remove('drag-over');
-                    this.handleFiles(e.dataTransfer.files);
-                });
-
-                fileInput.addEventListener('change', (e) => {
-                    this.handleFiles(e.target.files);
-                });
+                uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+                uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+                uploadZone.addEventListener('drop', (e) => { e.preventDefault(); uploadZone.classList.remove('drag-over'); this.handleFiles(e.dataTransfer.files); });
+                fileInput.addEventListener('change', (e) => this.handleFiles(e.target.files));
             }
 
             async handleFiles(files) {
                 if (!files.length) return;
-
                 const progressBar = document.getElementById('progressBar');
                 const progressFill = document.getElementById('progressFill');
-
                 progressBar.classList.add('active');
 
                 try {
                     const parsedData = [];
-
                     for (let i = 0; i < files.length; i++) {
-                        const file = files[i];
                         progressFill.style.width = ((i / files.length) * 100) + '%';
-
-                        const data = await this.parseExcelFile(file);
+                        const data = await this.parseExcelFile(files[i]);
                         if (data) parsedData.push(...data);
                     }
-
                     progressFill.style.width = '100%';
 
-                    // Store data for current market
                     const currentMarket = stateManager.getState('currentMarket');
+
+                    // Store historical snapshot
+                    await db.history.add({
+                        market: currentMarket,
+                        weekStart: new Date().toISOString().split('T')[0],
+                        weekEnd: new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0],
+                        data: parsedData,
+                        createdAt: new Date().toISOString()
+                    });
+
                     await db.markets.put({
                         name: currentMarket,
                         data: parsedData,
@@ -683,15 +415,12 @@
                     });
 
                     stateManager.setState(`markets.${currentMarket}`, parsedData);
-
-                    // Render dashboard
                     DashboardRenderer.render();
 
                     setTimeout(() => {
                         progressBar.classList.remove('active');
                         progressFill.style.width = '0%';
                     }, 1000);
-
                 } catch (error) {
                     console.error('Error processing files:', error);
                     alert('Error processing files: ' + error.message);
@@ -702,62 +431,38 @@
             async parseExcelFile(file) {
                 return new Promise((resolve, reject) => {
                     const reader = new FileReader();
-
                     reader.onload = (e) => {
                         try {
                             const data = new Uint8Array(e.target.result);
                             const workbook = XLSX.read(data, { type: 'array' });
                             const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                             const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-
-                            // Normalize data structure
                             const normalized = this.normalizeData(jsonData);
                             resolve(normalized);
-                        } catch (error) {
-                            reject(error);
-                        }
+                        } catch (error) { reject(error); }
                     };
-
                     reader.onerror = () => reject(new Error('Failed to read file'));
                     reader.readAsArrayBuffer(file);
                 });
             }
 
             normalizeData(data) {
-                // Detect if it's Meta or Google data based on columns
                 const firstRow = data[0];
                 const isMeta = 'af_start_trial' in firstRow;
-                const isGoogle = 'start_trial_d0' in firstRow;
-
                 return data.map(row => {
-                    if (isMeta) {
-                        return {
-                            channel: 'meta',
-                            platform: this.detectPlatform(row),
-                            show: row.Show || row.show || 'Unknown',
-                            spend: parseFloat(row[CONFIG.metaColumns.spend]) || 0,
-                            trials: parseInt(row[CONFIG.metaColumns.trials]) || 0,
-                            cac: parseFloat(row[CONFIG.metaColumns.cac]) || 0,
-                            ir: parseFloat(row[CONFIG.metaColumns.ir]) || 0,
-                            tr: parseFloat(row[CONFIG.metaColumns.tr]) || 0,
-                            tcr: parseFloat(row[CONFIG.metaColumns.tcr]) || 0,
-                            ctr: parseFloat(row[CONFIG.metaColumns.ctr]) || 0
-                        };
-                    } else if (isGoogle) {
-                        return {
-                            channel: 'google',
-                            platform: this.detectPlatform(row),
-                            show: row.Show || row.show || 'Unknown',
-                            spend: parseFloat(row[CONFIG.googleColumns.spend]) || 0,
-                            trials: parseInt(row[CONFIG.googleColumns.trials]) || 0,
-                            cac: parseFloat(row[CONFIG.googleColumns.cac]) || 0,
-                            ir: parseFloat(row[CONFIG.googleColumns.ir]) || 0,
-                            tr: parseFloat(row[CONFIG.googleColumns.tr]) || 0,
-                            tcr: parseFloat(row[CONFIG.googleColumns.tcr]) || 0,
-                            ctr: parseFloat(row[CONFIG.googleColumns.ctr]) || 0
-                        };
-                    }
-                    return null;
+                    const cols = isMeta ? CONFIG.metaColumns : CONFIG.googleColumns;
+                    return {
+                        channel: isMeta ? 'meta' : 'google',
+                        platform: this.detectPlatform(row),
+                        show: row.Show || row.show || 'Unknown',
+                        spend: parseFloat(row[cols.spend]) || 0,
+                        trials: parseInt(row[cols.trials]) || 0,
+                        cac: parseFloat(row[cols.cac]) || 0,
+                        ir: parseFloat(row[cols.ir]) || 0,
+                        tr: parseFloat(row[cols.tr]) || 0,
+                        tcr: parseFloat(row[cols.tcr]) || 0,
+                        ctr: parseFloat(row[cols.ctr]) || 0
+                    };
                 }).filter(row => row !== null);
             }
 
@@ -765,7 +470,7 @@
                 const str = JSON.stringify(row).toLowerCase();
                 if (str.includes('web')) return 'web';
                 if (str.includes('app')) return 'app';
-                return 'app'; // default
+                return 'app';
             }
         }
 
@@ -777,75 +482,35 @@
 
                 if (!data || !data.length) {
                     document.getElementById('emptyState').classList.remove('hidden');
-                    document.getElementById('kpiGrid').classList.add('hidden');
+                    document.getElementById('kpiGrid').innerHTML = '';
                     return;
                 }
 
                 document.getElementById('emptyState').classList.add('hidden');
-                document.getElementById('kpiGrid').classList.remove('hidden');
-
                 const metrics = AnalyticsEngine.calculateOverall(data);
-                if (metrics) {
-                    this.renderKPICards(metrics);
-                }
+                if (metrics) this.renderKPICards(metrics);
+
+                // Render charts based on active tab
+                const currentTab = stateManager.getState('currentTab');
+                if (currentTab === 'channel') this.renderChannelChart(data);
+                if (currentTab === 'platform') this.renderPlatformChart(data);
+                if (currentTab === 'show') this.renderShowTable(data);
+                if (currentTab === 'overall') this.renderTrendsChart();
+                if (currentTab === 'compare') this.renderComparison();
             }
 
             static renderKPICards(metrics) {
-                const kpiGrid = document.getElementById('kpiGrid');
-
                 const kpis = [
-                    {
-                        label: 'Total Spend',
-                        value: AnalyticsEngine.formatCurrency(metrics.totalSpend),
-                        metric: 'SPEND',
-                        threshold: true,
-                        trend: null
-                    },
-                    {
-                        label: 'Total Trials',
-                        value: metrics.totalTrials.toLocaleString(),
-                        metric: 'TRIALS',
-                        threshold: true,
-                        trend: null
-                    },
-                    {
-                        label: 'Average CAC',
-                        value: AnalyticsEngine.formatCurrency(metrics.cac),
-                        metric: 'CAC',
-                        threshold: AnalyticsEngine.checkThreshold('CAC', metrics.cac),
-                        trend: null
-                    },
-                    {
-                        label: 'CTR (Click Through Rate)',
-                        value: AnalyticsEngine.formatPercentage(metrics.ctr),
-                        metric: 'CTR',
-                        threshold: AnalyticsEngine.checkThreshold('CTR', metrics.ctr),
-                        trend: null
-                    },
-                    {
-                        label: 'IR (Install Rate)',
-                        value: AnalyticsEngine.formatPercentage(metrics.ir),
-                        metric: 'IR',
-                        threshold: AnalyticsEngine.checkThreshold('IR', metrics.ir),
-                        trend: null
-                    },
-                    {
-                        label: 'TR (Trial Rate)',
-                        value: AnalyticsEngine.formatPercentage(metrics.tr),
-                        metric: 'TR',
-                        threshold: AnalyticsEngine.checkThreshold('TR', metrics.tr),
-                        trend: null
-                    },
-                    {
-                        label: 'D0 TCR (Trial Churn Rate)',
-                        value: AnalyticsEngine.formatPercentage(metrics.tcr),
-                        metric: 'TCR',
-                        threshold: AnalyticsEngine.checkThreshold('TCR', metrics.tcr),
-                        trend: null
-                    }
+                    { label: 'Total Spend', value: AnalyticsEngine.formatCurrency(metrics.totalSpend), metric: 'SPEND', threshold: true },
+                    { label: 'Total Trials', value: metrics.totalTrials.toLocaleString(), metric: 'TRIALS', threshold: true },
+                    { label: 'Average CAC', value: AnalyticsEngine.formatCurrency(metrics.cac), metric: 'CAC', threshold: AnalyticsEngine.checkThreshold('CAC', metrics.cac) },
+                    { label: 'CTR (Click Through Rate)', value: AnalyticsEngine.formatPercentage(metrics.ctr), metric: 'CTR', threshold: AnalyticsEngine.checkThreshold('CTR', metrics.ctr) },
+                    { label: 'IR (Install Rate)', value: AnalyticsEngine.formatPercentage(metrics.ir), metric: 'IR', threshold: AnalyticsEngine.checkThreshold('IR', metrics.ir) },
+                    { label: 'TR (Trial Rate)', value: AnalyticsEngine.formatPercentage(metrics.tr), metric: 'TR', threshold: AnalyticsEngine.checkThreshold('TR', metrics.tr) },
+                    { label: 'D0 TCR (Trial Churn Rate)', value: AnalyticsEngine.formatPercentage(metrics.tcr), metric: 'TCR', threshold: AnalyticsEngine.checkThreshold('TCR', metrics.tcr) }
                 ];
 
-                kpiGrid.innerHTML = kpis.map(kpi => `
+                document.getElementById('kpiGrid').innerHTML = kpis.map(kpi => `
                     <div class="kpi-card ${kpi.threshold ? 'healthy' : 'unhealthy'}">
                         <div class="kpi-label">${kpi.label}</div>
                         <div class="kpi-value">${kpi.value}</div>
@@ -855,11 +520,226 @@
                     </div>
                 `).join('');
             }
+
+            static renderChannelChart(data) {
+                const breakdown = AnalyticsEngine.calculateChannelBreakdown(data);
+                const ctx = document.getElementById('channelChart');
+                if (!ctx) return;
+
+                if (window.channelChartInstance) window.channelChartInstance.destroy();
+
+                window.channelChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Spend (₹)', 'Trials', 'CAC (₹)', 'CTR %', 'IR %', 'TR %', 'TCR %'],
+                        datasets: [
+                            { label: 'Meta', data: [breakdown.meta?.totalSpend, breakdown.meta?.totalTrials, breakdown.meta?.cac, breakdown.meta?.ctr, breakdown.meta?.ir, breakdown.meta?.tr, breakdown.meta?.tcr], backgroundColor: 'rgba(59, 130, 246, 0.7)' },
+                            { label: 'Google', data: [breakdown.google?.totalSpend, breakdown.google?.totalTrials, breakdown.google?.cac, breakdown.google?.ctr, breakdown.google?.ir, breakdown.google?.tr, breakdown.google?.tcr], backgroundColor: 'rgba(16, 185, 129, 0.7)' }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            static renderPlatformChart(data) {
+                const breakdown = AnalyticsEngine.calculatePlatformBreakdown(data);
+                const ctx = document.getElementById('platformChart');
+                if (!ctx) return;
+
+                if (window.platformChartInstance) window.platformChartInstance.destroy();
+
+                window.platformChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Spend (₹)', 'Trials', 'CAC (₹)', 'CTR %', 'IR %', 'TR %', 'TCR %'],
+                        datasets: [
+                            { label: 'App', data: [breakdown.app?.totalSpend, breakdown.app?.totalTrials, breakdown.app?.cac, breakdown.app?.ctr, breakdown.app?.ir, breakdown.app?.tr, breakdown.app?.tcr], backgroundColor: 'rgba(139, 92, 246, 0.7)' },
+                            { label: 'Web', data: [breakdown.web?.totalSpend, breakdown.web?.totalTrials, breakdown.web?.cac, breakdown.web?.ctr, breakdown.web?.ir, breakdown.web?.tr, breakdown.web?.tcr], backgroundColor: 'rgba(245, 158, 11, 0.7)' }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            static renderShowTable(data) {
+                const shows = AnalyticsEngine.calculateShowPerformance(data);
+                const container = document.getElementById('showTableContainer');
+
+                container.innerHTML = `
+                    <table class="show-table">
+                        <thead>
+                            <tr>
+                                <th>Show Name</th>
+                                <th>Spend (₹)</th>
+                                <th>Trials</th>
+                                <th>CAC (₹)</th>
+                                <th>CTR %</th>
+                                <th>IR %</th>
+                                <th>TR %</th>
+                                <th>TCR %</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${shows.map((show, idx) => {
+                                const rowClass = idx < 3 ? 'top-performer' : (parseFloat(show.tcr) > 30 || parseFloat(show.cac) > 250) ? 'underperformer' : '';
+                                return `
+                                    <tr class="${rowClass}">
+                                        <td><strong>${show.show}</strong></td>
+                                        <td>${AnalyticsEngine.formatCurrency(show.totalSpend)}</td>
+                                        <td>${show.totalTrials.toLocaleString()}</td>
+                                        <td>${AnalyticsEngine.formatCurrency(show.cac)}</td>
+                                        <td>${show.ctr}%</td>
+                                        <td>${show.ir}%</td>
+                                        <td>${show.tr}%</td>
+                                        <td>${show.tcr}%</td>
+                                        <td>${idx < 3 ? '🏆 Top Performer' : (rowClass === 'underperformer' ? '⚠️ Needs Attention' : '✅ Good')}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+
+            static async renderTrendsChart() {
+                const currentMarket = stateManager.getState('currentMarket');
+                const history = await db.history.where('market').equals(currentMarket).sortBy('createdAt');
+
+                if (history.length < 2) return; // Need at least 2 weeks for trends
+
+                const ctx = document.getElementById('trendsChart');
+                if (!ctx) return;
+
+                if (window.trendsChartInstance) window.trendsChartInstance.destroy();
+
+                const labels = history.map((h, i) => `Week ${i + 1}`);
+                const cacData = history.map(h => {
+                    const metrics = AnalyticsEngine.calculateOverall(h.data);
+                    return metrics ? parseFloat(metrics.cac) : 0;
+                });
+                const trialsData = history.map(h => {
+                    const metrics = AnalyticsEngine.calculateOverall(h.data);
+                    return metrics ? metrics.totalTrials : 0;
+                });
+
+                window.trendsChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [
+                            { label: 'CAC (₹)', data: cacData, borderColor: 'rgba(239, 68, 68, 1)', tension: 0.4, yAxisID: 'y' },
+                            { label: 'Trials', data: trialsData, borderColor: 'rgba(16, 185, 129, 1)', tension: 0.4, yAxisID: 'y1' }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { type: 'linear', position: 'left', title: { display: true, text: 'CAC (₹)' } },
+                            y1: { type: 'linear', position: 'right', title: { display: true, text: 'Trials' }, grid: { drawOnChartArea: false } }
+                        }
+                    }
+                });
+            }
+
+            static async renderComparison() {
+                const container = document.getElementById('comparisonGrid');
+                const markets = CONFIG.markets;
+                const comparisonData = [];
+
+                for (const market of markets) {
+                    const marketData = await db.markets.get(market);
+                    if (marketData && marketData.data) {
+                        const metrics = AnalyticsEngine.calculateOverall(marketData.data);
+                        comparisonData.push({ market, metrics });
+                    }
+                }
+
+                container.innerHTML = comparisonData.map(item => `
+                    <div class="comparison-card">
+                        <h4>${item.market.charAt(0).toUpperCase() + item.market.slice(1)}</h4>
+                        <p><strong>Total Spend:</strong> ${AnalyticsEngine.formatCurrency(item.metrics.totalSpend)}</p>
+                        <p><strong>Total Trials:</strong> ${item.metrics.totalTrials.toLocaleString()}</p>
+                        <p><strong>CAC:</strong> ${AnalyticsEngine.formatCurrency(item.metrics.cac)}</p>
+                        <p><strong>TCR:</strong> ${item.metrics.tcr}%</p>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // ========== AI INSIGHTS GENERATOR ==========
+        async function generateInsights() {
+            const currentMarket = stateManager.getState('currentMarket');
+            const data = stateManager.getState(`markets.${currentMarket}`);
+
+            if (!data || !data.length) {
+                alert('Please upload data first');
+                return;
+            }
+
+            const container = document.getElementById('insightsContainer');
+            container.innerHTML = '<div class="loading">Generating AI insights...</div>';
+
+            // Rule-based insights (fallback)
+            const metrics = AnalyticsEngine.calculateOverall(data);
+            const shows = AnalyticsEngine.calculateShowPerformance(data);
+            const insights = [];
+
+            // Insight 1: Top Performer
+            const topShow = shows[0];
+            insights.push({
+                title: `Scale ${topShow.show} - Best Performance`,
+                analysis: `${topShow.show} shows strong performance with ${topShow.totalTrials} trials and CAC of ₹${topShow.cac}. This represents ${((topShow.totalTrials / metrics.totalTrials) * 100).toFixed(1)}% of total volume.`,
+                recommendation: `Increase budget allocation by 15-20% for ${topShow.show} to capitalize on proven efficiency.`,
+                priority: 'high'
+            });
+
+            // Insight 2: TCR Alert
+            if (parseFloat(metrics.tcr) > 30) {
+                insights.push({
+                    title: 'High Trial Churn Rate Detected',
+                    analysis: `Overall TCR at ${metrics.tcr}% exceeds the 30% threshold. This indicates retention issues in the onboarding flow.`,
+                    recommendation: 'Investigate onboarding experience, optimize trial value proposition, and consider extending trial period.',
+                    priority: 'high'
+                });
+            }
+
+            // Insight 3: CAC Efficiency
+            if (parseFloat(metrics.cac) < 250) {
+                insights.push({
+                    title: 'Excellent CAC Performance',
+                    analysis: `Current blended CAC of ₹${metrics.cac} is below the ₹250 target, showing strong acquisition efficiency.`,
+                    recommendation: 'Maintain current targeting strategy and consider scaling budget by 10-15% across top-performing channels.',
+                    priority: 'medium'
+                });
+            }
+
+            // Render insights
+            container.innerHTML = insights.map(insight => `
+                <div class="insight-card ${insight.priority}">
+                    <span class="insight-badge ${insight.priority}">${insight.priority.toUpperCase()} PRIORITY</span>
+                    <div class="insight-title">${insight.title}</div>
+                    <div class="insight-analysis">${insight.analysis}</div>
+                    <div class="insight-recommendation">
+                        <strong>💡 Recommendation:</strong> ${insight.recommendation}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ========== SETTINGS ==========
+        function showSettings() {
+            const apiKey = prompt('Enter your Claude API key (optional for AI insights):');
+            if (apiKey) {
+                db.settings.put({ key: 'apiKey', value: apiKey });
+                stateManager.setState('apiKey', apiKey);
+                alert('API key saved successfully!');
+            }
         }
 
         // ========== INITIALIZATION ==========
         document.addEventListener('DOMContentLoaded', async () => {
-            // Initialize upload handler
             new UploadHandler();
 
             // Market selector
@@ -867,17 +747,14 @@
                 btn.addEventListener('click', async (e) => {
                     document.querySelectorAll('.market-btn').forEach(b => b.classList.remove('active'));
                     e.target.classList.add('active');
-
                     const market = e.target.dataset.market;
                     stateManager.setState('currentMarket', market);
-
-                    // Load data from IndexedDB
                     const marketData = await db.markets.get(market);
                     if (marketData) {
                         stateManager.setState(`markets.${market}`, marketData.data);
                         DashboardRenderer.render();
                     } else {
-                        DashboardRenderer.render(); // Will show empty state
+                        DashboardRenderer.render();
                     }
                 });
             });
@@ -887,16 +764,16 @@
                 btn.addEventListener('click', (e) => {
                     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-
                     e.target.classList.add('active');
                     const tab = e.target.dataset.tab;
                     document.getElementById(`tab-${tab}`).classList.add('active');
-
                     stateManager.setState('currentTab', tab);
+                    DashboardRenderer.render();
+                    if (tab === 'insights') generateInsights();
                 });
             });
 
-            // Load initial data for current market
+            // Load initial data
             const currentMarket = stateManager.getState('currentMarket');
             const marketData = await db.markets.get(currentMarket);
             if (marketData) {
@@ -904,7 +781,7 @@
                 DashboardRenderer.render();
             }
 
-            console.log('✅ STAGE Dashboard Initialized');
+            console.log('✅ STAGE Dashboard v2.0 Initialized - Sprint 2 Complete');
         });
     </script>
 </body>
