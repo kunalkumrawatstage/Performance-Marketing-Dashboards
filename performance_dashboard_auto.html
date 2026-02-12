@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>STAGE OTT Performance Marketing Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .header p {
+      font-size: 1.2rem;
+      opacity: 0.9;
+    }
+
+    .content {
+      padding: 2rem;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .metric-card {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+
+    .metric-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
+
+    .metric-card h3 {
+      font-size: 0.9rem;
+      color: #6c757d;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .metric-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #212529;
+      margin-bottom: 0.5rem;
+    }
+
+    .metric-status {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .status-good {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .status-warning {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .status-bad {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .insights-section {
+      margin-bottom: 2rem;
+    }
+
+    .insight-box {
+      background: white;
+      border-left: 4px solid;
+      border-radius: 8px;
+      padding: 1rem 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .insight-box.success {
+      border-color: #28a745;
+      background: #d4edda;
+    }
+
+    .insight-box.warning {
+      border-color: #ffc107;
+      background: #fff3cd;
+    }
+
+    .insight-box.critical {
+      border-color: #dc3545;
+      background: #f8d7da;
+    }
+
+    .insight-box h4 {
+      margin-bottom: 0.5rem;
+      font-size: 1.1rem;
+    }
+
+    .recommendations-section {
+      margin-bottom: 2rem;
+    }
+
+    .recommendation-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-left: 6px solid;
+    }
+
+    .recommendation-card.scale {
+      border-color: #28a745;
+    }
+
+    .recommendation-card.optimize {
+      border-color: #ffc107;
+    }
+
+    .recommendation-card.pause {
+      border-color: #dc3545;
+    }
+
+    .recommendation-card h4 {
+      margin-bottom: 0.5rem;
+      font-size: 1.2rem;
+    }
+
+    .recommendation-card .reason {
+      color: #6c757d;
+      margin-bottom: 0.5rem;
+    }
+
+    .recommendation-card .action {
+      background: #f8f9fa;
+      padding: 0.75rem;
+      border-radius: 6px;
+      margin-top: 0.5rem;
+      font-weight: 500;
+    }
+
+    .charts-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .chart-container {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .chart-container h3 {
+      margin-bottom: 1rem;
+      color: #212529;
+    }
+
+    .table-container {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+    }
+
+    td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    tr:hover {
+      background: #f8f9fa;
+    }
+
+    .scale-score-bar {
+      height: 24px;
+      background: #e9ecef;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .scale-score-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #dc3545 0%, #ffc107 50%, #28a745 100%);
+      transition: width 0.3s ease;
+    }
+
+    .scale-score-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-weight: bold;
+      font-size: 0.85rem;
+      color: #212529;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.5s ease-out;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-chart-line"></i> STAGE OTT Performance Dashboard</h1>
+      <p>Week: Feb 1-7, 2026 | Automated Insights & Recommendations</p>
+    </div>
+
+    <div class="content">
+      <div id="mainContent"></div>
+    </div>
+  </div>
+
+  <script>
+    // ========== EMBEDDED DATA FROM CSV FILES ==========
+    const DATA = {
+      meta_app: [
+        { showName: 'Saanwari', spend: 1007212, trials: 3555, cac: 283, tcr: 32.04, ir: 13.14, tr: 25.02, channel: 'Meta', platform: 'App' },
+        { showName: '31st', spend: 593574, trials: 2362, cac: 251, tcr: 31.51, ir: 21.13, tr: 28.43, channel: 'Meta', platform: 'App' },
+        { showName: 'JholaChhap', spend: 106186, trials: 219, cac: 485, tcr: 38.27, ir: 6.82, tr: 28.82, channel: 'Meta', platform: 'App' },
+        { showName: 'Minzar', spend: 88201, trials: 209, cac: 422, tcr: 29.61, ir: 18.76, tr: 15.71, channel: 'Meta', platform: 'App' },
+        { showName: 'BuilderBoys', spend: 60660, trials: 121, cac: 501, tcr: 35.24, ir: 21.33, tr: 14.94, channel: 'Meta', platform: 'App' },
+        { showName: 'Punarjanam', spend: 19225, trials: 33, cac: 583, tcr: 31.03, ir: 6.32, tr: 28.70, channel: 'Meta', platform: 'App' },
+        { showName: 'BewafaDarling', spend: 6725, trials: 2, cac: 3363, tcr: 0, ir: 1.68, tr: 15.38, channel: 'Meta', platform: 'App' },
+        { showName: 'VideshiBahu', spend: 4311, trials: 7, cac: 616, tcr: 0, ir: 10.33, tr: 20.59, channel: 'Meta', platform: 'App' },
+        { showName: 'Akshar', spend: 3874, trials: 6, cac: 646, tcr: 66.67, ir: 14.87, tr: 15.00, channel: 'Meta', platform: 'App' }
+      ],
+      google_app: [
+        { showName: 'Saanwari', spend: 380219, trials: 934, cac: 407, tcr: 30.64, ir: 6.21, tr: 14.71, channel: 'Google', platform: 'App' },
+        { showName: 'Minzar', spend: 30716, trials: 44, cac: 698, tcr: 29.55, ir: 4.41, tr: 16.54, channel: 'Google', platform: 'App' },
+        { showName: 'BuilderBoys', spend: 7931, trials: 25, cac: 317, tcr: 28.00, ir: 12.20, tr: 16.23, channel: 'Google', platform: 'App' },
+        { showName: 'BewafaDarling', spend: 6869, trials: 3, cac: 2290, tcr: 66.67, ir: 5.06, tr: 9.09, channel: 'Google', platform: 'App' },
+        { showName: 'Punarjanam', spend: 1792, trials: 4, cac: 448, tcr: 0, ir: 11.58, tr: 11.11, channel: 'Google', platform: 'App' },
+        { showName: 'VideshiBahu', spend: 1277, trials: 5, cac: 255, tcr: 20.00, ir: 9.35, tr: 19.23, channel: 'Google', platform: 'App' },
+        { showName: 'GJ31st', spend: 1165, trials: 1, cac: 1165, tcr: 0, ir: 10.93, tr: 5.00, channel: 'Google', platform: 'App' },
+        { showName: 'JholaChhap', spend: 1103, trials: 2, cac: 551, tcr: 50.00, ir: 6.41, tr: 20.00, channel: 'Google', platform: 'App' }
+      ],
+      meta_web: [
+        { showName: 'Saanwari', spend: 151438, trials: 640, cac: 237, tcr: 39.34, ir: 0, tr: 0, channel: 'Meta', platform: 'Web' }
+      ]
+    };
+
+    // Combine all data
+    const allShows = [...DATA.meta_app, ...DATA.google_app, ...DATA.meta_web];
+
+    // ========== THRESHOLDS ==========
+    const THRESHOLDS = {
+      TCR: { GOOD: 30, WARNING: 33 },
+      IR: { GOOD: 10, WARNING: 9 },
+      TR: { GOOD: 20, WARNING: 18 }
+    };
+
+    // ========== METRICS CALCULATOR ==========
+    function calculateAggregateMetrics(showData) {
+      if (showData.length === 0) return null;
+
+      const totalSpend = showData.reduce((sum, show) => sum + (show.spend || 0), 0);
+      const totalTrials = showData.reduce((sum, show) => sum + (show.trials || 0), 0);
+
+      const weightedTCR = showData.reduce((sum, show) =>
+        sum + (show.tcr || 0) * (show.trials || 0), 0) / totalTrials;
+
+      const weightedIR = showData.reduce((sum, show) =>
+        sum + (show.ir || 0) * (show.trials || 0), 0) / totalTrials;
+
+      const weightedTR = showData.reduce((sum, show) =>
+        sum + (show.tr || 0) * (show.trials || 0), 0) / totalTrials;
+
+      return {
+        totalSpend: Math.round(totalSpend),
+        totalTrials: Math.round(totalTrials),
+        blendedCAC: totalTrials > 0 ? Math.round(totalSpend / totalTrials) : 0,
+        averageTCR: Math.round(weightedTCR * 10) / 10,
+        averageIR: Math.round(weightedIR * 10) / 10,
+        averageTR: Math.round(weightedTR * 10) / 10,
+        showCount: showData.length
+      };
+    }
+
+    function getThresholdStatus(metricName, value) {
+      const thresholds = THRESHOLDS[metricName.toUpperCase()];
+      if (!thresholds) return 'unknown';
+
+      if (metricName.toUpperCase() === 'TCR') {
+        if (value < thresholds.GOOD) return 'good';
+        if (value < thresholds.WARNING) return 'warning';
+        return 'bad';
+      }
+
+      if (value > thresholds.GOOD) return 'good';
+      if (value > thresholds.WARNING) return 'warning';
+      return 'bad';
+    }
+
+    function formatCurrency(value) {
+      if (value >= 100000) {
+        return `₹${(value / 100000).toFixed(2)}L`;
+      }
+      return `₹${value.toLocaleString('en-IN')}`;
+    }
+
+    function calculateScalePotential(show) {
+      let score = 50;
+
+      const tcrStatus = getThresholdStatus('TCR', show.tcr || 50);
+      if (tcrStatus === 'good') score += 30;
+      else if (tcrStatus === 'warning') score += 15;
+
+      const irStatus = getThresholdStatus('IR', show.ir || 5);
+      if (irStatus === 'good') score += 20;
+      else if (irStatus === 'warning') score += 10;
+
+      const trStatus = getThresholdStatus('TR', show.tr || 15);
+      if (trStatus === 'good') score += 20;
+      else if (trStatus === 'warning') score += 10;
+
+      if (show.trials > 1000) score += 20;
+      else if (show.trials > 500) score += 15;
+      else if (show.trials > 100) score += 10;
+      else if (show.trials > 50) score += 5;
+
+      if (show.cac < 250) score += 10;
+      else if (show.cac < 300) score += 5;
+
+      return Math.min(100, Math.max(0, score));
+    }
+
+    function generateShowRecommendations(show) {
+      const tcrStatus = getThresholdStatus('TCR', show.tcr || 0);
+      const irStatus = getThresholdStatus('IR', show.ir || 0);
+      const trStatus = getThresholdStatus('TR', show.tr || 0);
+
+      const warnings = [];
+      if (tcrStatus === 'bad') warnings.push('High TCR');
+      if (irStatus === 'bad') warnings.push('Low IR');
+      if (trStatus === 'bad') warnings.push('Low TR');
+
+      const allMetricsGood = tcrStatus === 'good' && irStatus === 'good' && trStatus === 'good';
+
+      if (allMetricsGood && show.trials > 100) {
+        return {
+          type: 'scale',
+          action: `Scale ${show.showName}`,
+          reason: `All metrics passing thresholds with ${show.trials} trials`,
+          details: `TCR: ${show.tcr}% ✅, IR: ${show.ir}% ✅, TR: ${show.tr}% ✅, CAC: ${formatCurrency(show.cac)}`,
+          suggestedAction: 'Increase budget by 30-50% to capture more volume'
+        };
+      } else if (warnings.length === 1 && show.trials > 50) {
+        return {
+          type: 'optimize',
+          action: `Optimize ${show.showName}`,
+          reason: `Good volume (${show.trials} trials) but 1 metric needs improvement`,
+          details: warnings.join(', '),
+          suggestedAction: 'Review failing metric, test new creatives, improve targeting'
+        };
+      } else if (warnings.length >= 2 || show.cac > 600) {
+        return {
+          type: 'pause',
+          action: `Review/Pause ${show.showName}`,
+          reason: `Multiple metrics failing or high CAC (₹${show.cac})`,
+          details: `${warnings.length} metrics failing: ${warnings.join(', ')}`,
+          suggestedAction: 'Pause and investigate root causes before scaling further'
+        };
+      }
+
+      return null;
+    }
+
+    function generateDashboardInsights(allShows, metrics) {
+      const insights = [];
+
+      const topByVolume = [...allShows].sort((a, b) => b.trials - a.trials).slice(0, 3);
+      const topByEfficiency = [...allShows].filter(s => s.cac > 0).sort((a, b) => a.cac - b.cac).slice(0, 3);
+
+      const tcrStatus = getThresholdStatus('TCR', metrics.averageTCR);
+      const irStatus = getThresholdStatus('IR', metrics.averageIR);
+      const trStatus = getThresholdStatus('TR', metrics.averageTR);
+
+      const passingMetrics = [tcrStatus, irStatus, trStatus].filter(s => s === 'good').length;
+
+      if (passingMetrics === 3) {
+        insights.push({
+          type: 'success',
+          icon: '🎉',
+          title: 'All Key Metrics Passing!',
+          message: `Excellent performance: TCR ${metrics.averageTCR}% ✅, IR ${metrics.averageIR}% ✅, TR ${metrics.averageTR}% ✅`,
+          action: 'Focus on scaling top performers to maximize growth'
+        });
+      } else if (passingMetrics === 0) {
+        insights.push({
+          type: 'critical',
+          icon: '🚨',
+          title: 'Urgent: All Metrics Failing',
+          message: `All key metrics below thresholds: TCR ${metrics.averageTCR}% ❌, IR ${metrics.averageIR}% ❌, TR ${metrics.averageTR}% ❌`,
+          action: 'IMMEDIATE ACTION: Pause new spend, investigate root causes, test new creatives'
+        });
+      } else {
+        const failing = [];
+        if (tcrStatus !== 'good') failing.push(`High TCR ${metrics.averageTCR}%`);
+        if (irStatus !== 'good') failing.push(`Low IR ${metrics.averageIR}%`);
+        if (trStatus !== 'good') failing.push(`Low TR ${metrics.averageTR}%`);
+
+        insights.push({
+          type: 'warning',
+          icon: '⚠️',
+          title: `${failing.length} Metric(s) Need Attention`,
+          message: failing.join(', '),
+          action: 'Review failing metrics and optimize campaigns'
+        });
+      }
+
+      insights.push({
+        type: 'info',
+        icon: '📊',
+        title: 'Top Performers by Volume',
+        message: topByVolume.map(s => `${s.showName}: ${s.trials} trials`).join(' | '),
+        action: `Consider scaling: ${topByVolume[0].showName}`
+      });
+
+      if (topByEfficiency.length > 0) {
+        insights.push({
+          type: 'success',
+          icon: '💰',
+          title: 'Most Cost-Efficient Shows',
+          message: topByEfficiency.map(s => `${s.showName}: ${formatCurrency(s.cac)}`).join(' | '),
+          action: `${topByEfficiency[0].showName} has lowest CAC - excellent acquisition efficiency`
+        });
+      }
+
+      const topSpender = [...allShows].sort((a, b) => b.spend - a.spend)[0];
+      const topSpendPercent = (topSpender.spend / metrics.totalSpend) * 100;
+
+      if (topSpendPercent > 50) {
+        insights.push({
+          type: 'warning',
+          icon: '⚡',
+          title: 'Budget Concentration Risk',
+          message: `${topSpender.showName} accounts for ${topSpendPercent.toFixed(0)}% of total spend`,
+          action: 'Diversify budget across multiple shows to reduce dependency risk'
+        });
+      }
+
+      return insights;
+    }
+
+    // ========== RENDER DASHBOARD ==========
+    function renderDashboard() {
+      const metrics = calculateAggregateMetrics(allShows);
+      const insights = generateDashboardInsights(allShows, metrics);
+
+      const tcrStatus = getThresholdStatus('TCR', metrics.averageTCR);
+      const irStatus = getThresholdStatus('IR', metrics.averageIR);
+      const trStatus = getThresholdStatus('TR', metrics.averageTR);
+
+      let html = `
+        <div class="fade-in">
+          <!-- Key Metrics -->
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <h3>Total Spend</h3>
+              <div class="metric-value">${formatCurrency(metrics.totalSpend)}</div>
+              <p style="color: #6c757d; font-size: 0.9rem;">${metrics.showCount} shows active</p>
+            </div>
+
+            <div class="metric-card">
+              <h3>Total Trials</h3>
+              <div class="metric-value">${metrics.totalTrials.toLocaleString()}</div>
+              <p style="color: #6c757d; font-size: 0.9rem;">User acquisitions</p>
+            </div>
+
+            <div class="metric-card">
+              <h3>Blended CAC</h3>
+              <div class="metric-value">${formatCurrency(metrics.blendedCAC)}</div>
+              <p style="color: #6c757d; font-size: 0.9rem;">Cost per trial</p>
+            </div>
+
+            <div class="metric-card">
+              <h3>D0 TCR</h3>
+              <div class="metric-value">${metrics.averageTCR}%</div>
+              <span class="metric-status status-${tcrStatus}">
+                ${tcrStatus === 'good' ? '✅ Good' : tcrStatus === 'warning' ? '⚠️ Warning' : '❌ Needs Attention'}
+              </span>
+              <p style="color: #6c757d; font-size: 0.9rem; margin-top: 0.5rem;">Target: <30%</p>
+            </div>
+
+            <div class="metric-card">
+              <h3>Install Rate (IR%)</h3>
+              <div class="metric-value">${metrics.averageIR}%</div>
+              <span class="metric-status status-${irStatus}">
+                ${irStatus === 'good' ? '✅ Good' : irStatus === 'warning' ? '⚠️ Warning' : '❌ Needs Attention'}
+              </span>
+              <p style="color: #6c757d; font-size: 0.9rem; margin-top: 0.5rem;">Target: >10%</p>
+            </div>
+
+            <div class="metric-card">
+              <h3>Trial Rate (TR%)</h3>
+              <div class="metric-value">${metrics.averageTR}%</div>
+              <span class="metric-status status-${trStatus}">
+                ${trStatus === 'good' ? '✅ Good' : trStatus === 'warning' ? '⚠️ Warning' : '❌ Needs Attention'}
+              </span>
+              <p style="color: #6c757d; font-size: 0.9rem; margin-top: 0.5rem;">Target: >20%</p>
+            </div>
+          </div>
+
+          <!-- Insights -->
+          <div class="insights-section">
+            <h2 style="margin-bottom: 1rem;"><i class="fas fa-lightbulb"></i> Smart Insights</h2>
+            ${insights.map(insight => `
+              <div class="insight-box ${insight.type}">
+                <h4>${insight.icon} ${insight.title}</h4>
+                <p style="margin-bottom: 0.5rem;">${insight.message}</p>
+                <p style="font-weight: 600; color: #212529;"><i class="fas fa-arrow-right"></i> ${insight.action}</p>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- Recommendations -->
+          <div class="recommendations-section">
+            <h2 style="margin-bottom: 1rem;"><i class="fas fa-tasks"></i> Actionable Recommendations</h2>
+            ${generateRecommendationsHTML()}
+          </div>
+
+          <!-- Charts -->
+          <div class="charts-section">
+            <div class="chart-container">
+              <h3><i class="fas fa-chart-pie"></i> Spend Distribution</h3>
+              <canvas id="spendChart"></canvas>
+            </div>
+            <div class="chart-container">
+              <h3><i class="fas fa-chart-bar"></i> CAC by Show</h3>
+              <canvas id="cacChart"></canvas>
+            </div>
+            <div class="chart-container">
+              <h3><i class="fas fa-chart-line"></i> TCR Performance</h3>
+              <canvas id="tcrChart"></canvas>
+            </div>
+            <div class="chart-container">
+              <h3><i class="fas fa-chart-bar"></i> Trials Volume</h3>
+              <canvas id="trialsChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Performance Table -->
+          <div class="table-container">
+            <h2 style="margin-bottom: 1rem;"><i class="fas fa-table"></i> Show Performance Table</h2>
+            ${generateTableHTML()}
+          </div>
+        </div>
+      `;
+
+      document.getElementById('mainContent').innerHTML = html;
+
+      // Render charts
+      setTimeout(() => {
+        renderCharts();
+      }, 100);
+    }
+
+    function generateRecommendationsHTML() {
+      const recommendations = allShows
+        .map(show => ({ show, rec: generateShowRecommendations(show) }))
+        .filter(item => item.rec !== null);
+
+      const byType = {
+        scale: recommendations.filter(r => r.rec.type === 'scale'),
+        optimize: recommendations.filter(r => r.rec.type === 'optimize'),
+        pause: recommendations.filter(r => r.rec.type === 'pause')
+      };
+
+      let html = '';
+
+      if (byType.scale.length > 0) {
+        html += '<h3 style="color: #28a745; margin-bottom: 1rem;">🟢 Scale Opportunities</h3>';
+        byType.scale.forEach(item => {
+          html += `
+            <div class="recommendation-card scale">
+              <h4>${item.rec.action}</h4>
+              <p class="reason"><strong>Why:</strong> ${item.rec.reason}</p>
+              <p><strong>Details:</strong> ${item.rec.details}</p>
+              <div class="action"><i class="fas fa-arrow-up"></i> ${item.rec.suggestedAction}</div>
+            </div>
+          `;
+        });
+      }
+
+      if (byType.optimize.length > 0) {
+        html += '<h3 style="color: #ffc107; margin-top: 2rem; margin-bottom: 1rem;">🟡 Optimization Needed</h3>';
+        byType.optimize.forEach(item => {
+          html += `
+            <div class="recommendation-card optimize">
+              <h4>${item.rec.action}</h4>
+              <p class="reason"><strong>Why:</strong> ${item.rec.reason}</p>
+              <p><strong>Details:</strong> ${item.rec.details}</p>
+              <div class="action"><i class="fas fa-wrench"></i> ${item.rec.suggestedAction}</div>
+            </div>
+          `;
+        });
+      }
+
+      if (byType.pause.length > 0) {
+        html += '<h3 style="color: #dc3545; margin-top: 2rem; margin-bottom: 1rem;">🔴 Review/Pause</h3>';
+        byType.pause.forEach(item => {
+          html += `
+            <div class="recommendation-card pause">
+              <h4>${item.rec.action}</h4>
+              <p class="reason"><strong>Why:</strong> ${item.rec.reason}</p>
+              <p><strong>Details:</strong> ${item.rec.details}</p>
+              <div class="action"><i class="fas fa-pause"></i> ${item.rec.suggestedAction}</div>
+            </div>
+          `;
+        });
+      }
+
+      return html || '<p>No specific recommendations at this time.</p>';
+    }
+
+    function generateTableHTML() {
+      const totalSpend = allShows.reduce((sum, s) => sum + s.spend, 0);
+      const totalTrials = allShows.reduce((sum, s) => sum + s.trials, 0);
+
+      // Calculate scale scores
+      const showsWithScores = allShows.map(show => ({
+        ...show,
+        scaleScore: calculateScalePotential(show),
+        spendPercent: (show.spend / totalSpend * 100).toFixed(1),
+        trialsPercent: (show.trials / totalTrials * 100).toFixed(1)
+      })).sort((a, b) => b.scaleScore - a.scaleScore);
+
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>Show Name</th>
+              <th>Channel</th>
+              <th>Platform</th>
+              <th>Spend</th>
+              <th>Trials</th>
+              <th>CAC</th>
+              <th>TCR</th>
+              <th>IR%</th>
+              <th>TR%</th>
+              <th>Scale Score</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      showsWithScores.forEach(show => {
+        const tcrStatus = getThresholdStatus('TCR', show.tcr);
+        const irStatus = getThresholdStatus('IR', show.ir);
+        const trStatus = getThresholdStatus('TR', show.tr);
+
+        html += `
+          <tr>
+            <td><strong>${show.showName}</strong></td>
+            <td>${show.channel}</td>
+            <td>${show.platform}</td>
+            <td>${formatCurrency(show.spend)}<br><small>${show.spendPercent}%</small></td>
+            <td>${show.trials.toLocaleString()}<br><small>${show.trialsPercent}%</small></td>
+            <td>${formatCurrency(show.cac)}</td>
+            <td>${show.tcr}% ${tcrStatus === 'good' ? '✅' : '❌'}</td>
+            <td>${show.ir}% ${irStatus === 'good' ? '✅' : '❌'}</td>
+            <td>${show.tr}% ${trStatus === 'good' ? '✅' : '❌'}</td>
+            <td>
+              <div class="scale-score-bar">
+                <div class="scale-score-fill" style="width: ${show.scaleScore}%"></div>
+                <div class="scale-score-text">${show.scaleScore}/100</div>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += `
+          </tbody>
+        </table>
+      `;
+
+      return html;
+    }
+
+    function renderCharts() {
+      // Spend Distribution
+      const spendData = allShows.map(s => ({ label: s.showName, value: s.spend }))
+        .sort((a, b) => b.value - a.value).slice(0, 8);
+
+      new Chart(document.getElementById('spendChart'), {
+        type: 'doughnut',
+        data: {
+          labels: spendData.map(d => d.label),
+          datasets: [{
+            data: spendData.map(d => d.value),
+            backgroundColor: [
+              '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+              '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'right' },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  const value = context.parsed;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percent = ((value / total) * 100).toFixed(1);
+                  return `${context.label}: ${formatCurrency(value)} (${percent}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // CAC by Show
+      const cacData = allShows.filter(s => s.cac > 0)
+        .sort((a, b) => a.cac - b.cac).slice(0, 10);
+
+      new Chart(document.getElementById('cacChart'), {
+        type: 'bar',
+        data: {
+          labels: cacData.map(s => s.showName),
+          datasets: [{
+            label: 'CAC (₹)',
+            data: cacData.map(s => s.cac),
+            backgroundColor: cacData.map(s =>
+              s.cac < 250 ? '#28a745' : s.cac < 350 ? '#ffc107' : '#dc3545'
+            )
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+
+      // TCR Performance
+      const tcrData = allShows.filter(s => s.tcr > 0)
+        .sort((a, b) => a.tcr - b.tcr);
+
+      new Chart(document.getElementById('tcrChart'), {
+        type: 'bar',
+        data: {
+          labels: tcrData.map(s => s.showName),
+          datasets: [{
+            label: 'TCR %',
+            data: tcrData.map(s => s.tcr),
+            backgroundColor: tcrData.map(s => {
+              const status = getThresholdStatus('TCR', s.tcr);
+              return status === 'good' ? '#28a745' : status === 'warning' ? '#ffc107' : '#dc3545';
+            })
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+
+      // Trials Volume
+      const trialsData = allShows.sort((a, b) => b.trials - a.trials).slice(0, 10);
+
+      new Chart(document.getElementById('trialsChart'), {
+        type: 'bar',
+        data: {
+          labels: trialsData.map(s => s.showName),
+          datasets: [{
+            label: 'Trials',
+            data: trialsData.map(s => s.trials),
+            backgroundColor: '#667eea'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+    }
+
+    // Initialize dashboard on load
+    window.addEventListener('DOMContentLoaded', () => {
+      console.log('[Dashboard] Auto-loading data from embedded CSV...');
+      renderDashboard();
+      console.log('[Dashboard] Dashboard rendered successfully!');
+    });
+  </script>
+</body>
+</html>
