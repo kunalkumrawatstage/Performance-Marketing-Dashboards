@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "name": "stage-performance-dashboard",
+  "builds": [
+    { "src": "dashboard-v2.html", "use": "@vercel/static" },
+    { "src": "performance_dashboard.html", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/", "dest": "/dashboard-v2.html" },
+    { "src": "/(.*)", "dest": "/$1" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, s-maxage=3600"
+        }
+      ]
+    }
+  ]
+}
