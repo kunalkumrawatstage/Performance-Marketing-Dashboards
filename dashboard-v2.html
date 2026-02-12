@@ -246,8 +246,25 @@
         const CONFIG = {
             markets: ['gujarati', 'haryanvi', 'rajasthani', 'bhojpuri'],
             thresholds: { CTR: 0.75, IR: 10, TR: 20, TCR: 30, CAC: 250 },
-            metaColumns: { spend: 'Spends_GST', trials: 'af_start_trial', cac: 'Mandate_CAC', ir: 'AF_IR%', tr: 'TR%_AF', tcr: 'TCR_D0', ctr: 'CTR' },
-            googleColumns: { spend: 'Spends_GST', trials: 'start_trial_d0', cac: 'CP_AF_CPT_D0', ir: 'AF_IR%', tr: 'AF_TR%', tcr: 'AF_TCR%', ctr: 'CTR' }
+            // Support multiple possible column names for flexibility
+            metaColumns: {
+                spend: ['Spends_GST', 'Spend'],
+                trials: ['af_start_trial', 'Trial_web', 'Trials', 'trial'],
+                cac: ['Mandate_CAC', 'CAC'],
+                ir: ['AF_IR%', 'IR%', 'IR'],
+                tr: ['TR%_AF', 'AF_TR%', 'TR%', 'TR'],
+                tcr: ['TCR_D0', 'TCR%', 'TCR'],
+                ctr: ['CTR', 'CTR%']
+            },
+            googleColumns: {
+                spend: ['Spends_GST', 'Spend'],
+                trials: ['start_trial_d0', 'Trials', 'trial'],
+                cac: ['CP_AF_CPT_D0', 'CAC'],
+                ir: ['AF_IR%', 'IR%', 'IR'],
+                tr: ['AF_TR%', 'TR%', 'TR'],
+                tcr: ['AF_TCR%', 'TCR%', 'TCR'],
+                ctr: ['CTR', 'CTR%']
+            }
         };
 
         // ========== DATABASE ==========
@@ -455,10 +472,13 @@
                             const jsonData = XLSX.utils.sheet_to_json(firstSheet);
                             console.log(`  📋 Raw rows from ${file.name}:`, jsonData.length);
                             if (jsonData.length > 0) {
-                                console.log('  🔍 Sample row columns:', Object.keys(jsonData[0]));
+                                console.log('  🔍 Sample row columns:', Object.keys(jsonData[0]).join(', '));
                             }
-                            const normalized = this.normalizeData(jsonData);
+                            const normalized = this.normalizeData(jsonData, file.name);
                             console.log(`  ✨ Normalized rows:`, normalized.length);
+                            if (normalized.length > 0) {
+                                console.log('  📊 Sample normalized row:', normalized[0]);
+                            }
                             resolve(normalized);
                         } catch (error) {
                             console.error(`  ❌ Parse error in ${file.name}:`, error);
@@ -470,64 +490,126 @@
                 });
             }
 
-            normalizeData(data) {
-                if (!data || data.length === 0) return [];
+            normalizeData(data, filename = '') {
+                if (!data || data.length === 0) {
+                    console.warn('  ⚠️ normalizeData: Empty data array');
+                    return [];
+                }
+
+                console.log(`  🔍 Processing ${data.length} raw rows from file`);
+
+                // Helper function to clean and parse numbers
+                const parseNumber = (value) => {
+                    if (!value) return 0;
+                    const cleaned = String(value).replace(/,/g, '').replace(/%/g, '').trim();
+                    return parseFloat(cleaned) || 0;
+                };
+
+                // Helper to find first matching column from array of possible names
+                const findColumn = (row, possibleNames) => {
+                    for (const name of possibleNames) {
+                        if (name in row && row[name] != null && row[name] !== '') {
+                            return row[name];
+                        }
+                    }
+                    return null;
+                };
 
                 // Filter out empty rows and header rows
                 const validRows = data.filter(row => {
+                    // Get show name from any possible column
                     const showName = row.Show_Name || row['Show_Name - APP'] || row.Show || row.show || row.showname;
-                    return showName && showName.trim() &&
-                           showName !== 'Grand Total' &&
-                           !showName.includes('Week_range') &&
-                           !showName.includes('Insights');
+
+                    if (!showName || !showName.trim()) return false;
+                    if (showName === 'Grand Total') return false;
+                    if (String(showName).includes('Week_range')) return false;
+                    if (String(showName).includes('Insights')) return false;
+                    if (String(showName).includes('Week (')) return false;
+                    if (String(showName).toLowerCase() === 'values') return false;
+
+                    return true;
                 });
 
-                if (validRows.length === 0) return [];
+                console.log(`  ✓ ${validRows.length} valid rows after filtering`);
+
+                if (validRows.length === 0) {
+                    console.warn('  ⚠️ No valid rows found after filtering');
+                    return [];
+                }
 
                 const firstRow = validRows[0];
-                const isMeta = 'af_start_trial' in firstRow;
+                console.log('  🔍 First row columns:', Object.keys(firstRow).slice(0, 10).join(', '));
 
-                return validRows.map(row => {
-                    const cols = isMeta ? CONFIG.metaColumns : CONFIG.googleColumns;
-                    const showName = row.Show_Name || row['Show_Name - APP'] || row.Show || row.show || row.showname || 'Unknown';
+                // Detect if Meta or Google based on column presence
+                const isMeta = 'af_start_trial' in firstRow || 'Trial_web' in firstRow || 'Mandate_CAC' in firstRow;
+                const channel = isMeta ? 'meta' : 'google';
+                console.log(`  📍 Detected channel: ${channel}`);
 
-                    // Helper function to clean and parse numbers
-                    const parseNumber = (value) => {
-                        if (!value) return 0;
-                        const cleaned = String(value).replace(/,/g, '').replace(/%/g, '');
-                        return parseFloat(cleaned) || 0;
-                    };
+                // Detect platform from filename
+                const platform = filename.toLowerCase().includes('web') ? 'web' : 'app';
+                console.log(`  📍 Detected platform: ${platform} (from filename)`);
 
-                    const spend = parseNumber(row[cols.spend]);
-                    const cac = parseNumber(row[cols.cac]);
+                const cols = isMeta ? CONFIG.metaColumns : CONFIG.googleColumns;
+                const normalized = [];
 
-                    // For Google: if no trials column, calculate from spend/CAC
-                    let trials = parseInt(parseNumber(row[cols.trials]));
-                    if (!isMeta && (!trials || trials === 0) && spend > 0 && cac > 0) {
+                for (let i = 0; i < validRows.length; i++) {
+                    const row = validRows[i];
+
+                    // Get show name
+                    const showName = (row.Show_Name || row['Show_Name - APP'] || row.Show || row.show || row.showname || 'Unknown').trim();
+
+                    // Find values using flexible column matching
+                    const spendValue = findColumn(row, cols.spend);
+                    const trialsValue = findColumn(row, cols.trials);
+                    const cacValue = findColumn(row, cols.cac);
+                    const irValue = findColumn(row, cols.ir);
+                    const trValue = findColumn(row, cols.tr);
+                    const tcrValue = findColumn(row, cols.tcr);
+                    const ctrValue = findColumn(row, cols.ctr);
+
+                    // Parse all values
+                    const spend = parseNumber(spendValue);
+                    let cac = parseNumber(cacValue);
+                    let trials = Math.round(parseNumber(trialsValue));
+
+                    // Calculate trials from spend/CAC if trials column missing or zero
+                    if ((!trials || trials === 0) && spend > 0 && cac > 0) {
                         trials = Math.round(spend / cac);
+                        console.log(`    💡 Calculated trials for ${showName}: ${trials} (from spend ${spend} / CAC ${cac})`);
                     }
 
-                    return {
-                        channel: isMeta ? 'meta' : 'google',
-                        platform: this.detectPlatform(row),
+                    // Calculate CAC from spend/trials if CAC is missing or zero
+                    if ((!cac || cac === 0) && spend > 0 && trials > 0) {
+                        cac = parseFloat((spend / trials).toFixed(2));
+                        console.log(`    💡 Calculated CAC for ${showName}: ${cac} (from spend ${spend} / trials ${trials})`);
+                    }
+
+                    const normalizedRow = {
+                        channel: channel,
+                        platform: platform,
                         show: showName,
                         spend: spend,
                         trials: trials,
                         cac: cac,
-                        ir: parseNumber(row[cols.ir]),
-                        tr: parseNumber(row[cols.tr]),
-                        tcr: parseNumber(row[cols.tcr]),
-                        ctr: parseNumber(row[cols.ctr])
+                        ir: parseNumber(irValue),
+                        tr: parseNumber(trValue),
+                        tcr: parseNumber(tcrValue),
+                        ctr: parseNumber(ctrValue)
                     };
-                }).filter(row => row.spend > 0 || row.trials > 0);
+
+                    // Only include if we have meaningful data
+                    if (spend > 0 || trials > 0) {
+                        normalized.push(normalizedRow);
+                    } else {
+                        console.log(`    ⚠️ Filtered out ${showName}: no spend or trials`);
+                    }
+                }
+
+                console.log(`  ✅ Normalized ${normalized.length} rows with data`);
+                return normalized;
             }
 
-            detectPlatform(row) {
-                const str = JSON.stringify(row).toLowerCase();
-                if (str.includes('web')) return 'web';
-                if (str.includes('app')) return 'app';
-                return 'app';
-            }
+            // detectPlatform now handled in normalizeData using filename
         }
 
         // ========== DASHBOARD RENDERER ==========
