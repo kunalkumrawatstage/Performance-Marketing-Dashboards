@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.anthropic.com; img-src 'self' data: blob:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.anthropic.com https://cdn.jsdelivr.net blob: data:; img-src 'self' data: blob:;">
     <title>STAGE Performance Marketing Dashboard v2.0</title>
 
     <!-- CDN Dependencies -->
@@ -475,7 +475,7 @@
 
                 // Filter out empty rows and header rows
                 const validRows = data.filter(row => {
-                    const showName = row.Show_Name || row['Show_Name - APP'] || row.Show || row.show;
+                    const showName = row.Show_Name || row['Show_Name - APP'] || row.Show || row.show || row.showname;
                     return showName && showName.trim() &&
                            showName !== 'Grand Total' &&
                            !showName.includes('Week_range') &&
@@ -489,7 +489,7 @@
 
                 return validRows.map(row => {
                     const cols = isMeta ? CONFIG.metaColumns : CONFIG.googleColumns;
-                    const showName = row.Show_Name || row['Show_Name - APP'] || row.Show || row.show || 'Unknown';
+                    const showName = row.Show_Name || row['Show_Name - APP'] || row.Show || row.show || row.showname || 'Unknown';
 
                     // Helper function to clean and parse numbers
                     const parseNumber = (value) => {
@@ -498,13 +498,22 @@
                         return parseFloat(cleaned) || 0;
                     };
 
+                    const spend = parseNumber(row[cols.spend]);
+                    const cac = parseNumber(row[cols.cac]);
+
+                    // For Google: if no trials column, calculate from spend/CAC
+                    let trials = parseInt(parseNumber(row[cols.trials]));
+                    if (!isMeta && (!trials || trials === 0) && spend > 0 && cac > 0) {
+                        trials = Math.round(spend / cac);
+                    }
+
                     return {
                         channel: isMeta ? 'meta' : 'google',
                         platform: this.detectPlatform(row),
                         show: showName,
-                        spend: parseNumber(row[cols.spend]),
-                        trials: parseInt(parseNumber(row[cols.trials])),
-                        cac: parseNumber(row[cols.cac]),
+                        spend: spend,
+                        trials: trials,
+                        cac: cac,
                         ir: parseNumber(row[cols.ir]),
                         tr: parseNumber(row[cols.tr]),
                         tcr: parseNumber(row[cols.tcr]),
