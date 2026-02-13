@@ -4,77 +4,118 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>STAGE Performance Dashboard - Gujarati Market</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 20px; }
-        .container { max-width: 1400px; margin: 0 auto; }
-        .header { background: white; padding: 30px; border-radius: 10px; margin-bottom: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .header h1 { color: #2563eb; font-size: 28px; margin-bottom: 10px; }
-        .header p { color: #666; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
 
-        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .metric-card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-left: 4px solid #2563eb; }
-        .metric-label { font-size: 14px; color: #666; margin-bottom: 8px; font-weight: 500; }
-        .metric-value { font-size: 32px; font-weight: 700; color: #111; margin-bottom: 5px; }
-        .metric-status { font-size: 13px; font-weight: 600; }
+        .header { background: white; padding: 25px 30px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { color: #2563eb; font-size: 24px; }
+        .header p { color: #666; font-size: 14px; margin-top: 5px; }
+
+        .success { background: #f0fdf4; color: #15803d; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #22c55e; font-size: 14px; }
+
+        .tab-nav { display: flex; gap: 10px; margin-bottom: 20px; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow-x: auto; }
+        .tab-btn { padding: 10px 20px; border: none; background: transparent; color: #666; font-weight: 500; cursor: pointer; border-radius: 6px; transition: all 0.2s; white-space: nowrap; }
+        .tab-btn:hover { background: #f3f4f6; color: #2563eb; }
+        .tab-btn.active { background: #2563eb; color: white; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .metric-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-left: 4px solid #2563eb; }
+        .metric-card.healthy { border-left-color: #10b981; }
+        .metric-card.unhealthy { border-left-color: #ef4444; }
+        .metric-label { font-size: 13px; color: #666; margin-bottom: 8px; font-weight: 500; }
+        .metric-value { font-size: 28px; font-weight: 700; color: #111; margin-bottom: 5px; }
+        .metric-status { font-size: 12px; font-weight: 600; }
         .metric-status.healthy { color: #10b981; }
         .metric-status.unhealthy { color: #ef4444; }
 
+        .chart-section { background: white; border-radius: 10px; padding: 30px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .chart-title { font-size: 18px; font-weight: 600; color: #111; margin-bottom: 20px; }
+        .chart-container { position: relative; height: 400px; }
+
         .shows-table { background: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .shows-table h2 { font-size: 20px; margin-bottom: 20px; color: #111; }
         table { width: 100%; border-collapse: collapse; }
-        th { background: #f3f4f6; padding: 12px; text-align: left; font-weight: 600; font-size: 13px; color: #374151; border-bottom: 2px solid #e5e7eb; }
+        th { background: #f3f4f6; padding: 12px; text-align: left; font-weight: 600; font-size: 13px; color: #374151; border-bottom: 2px solid #e5e7eb; cursor: pointer; }
+        th:hover { background: #e5e7eb; }
         td { padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
         tr:hover { background: #f9fafb; }
         .channel-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
         .channel-meta { background: #dbeafe; color: #1e40af; }
         .channel-google { background: #d1fae5; color: #065f46; }
-        .platform-app { color: #7c3aed; }
-        .platform-web { color: #ea580c; }
-
-        .success { background: #f0fdf4; color: #15803d; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #22c55e; }
-        .success strong { font-size: 16px; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>📊 STAGE Performance Dashboard</h1>
-            <p>Gujarati Market • Performance Marketing Analytics • Data Pre-Loaded ✅</p>
+            <div>
+                <h1>📊 STAGE Performance Dashboard</h1>
+                <p>Gujarati Market • Data Pre-Loaded ✅</p>
+            </div>
         </div>
 
         <div class="success">
-            <strong>✅ Dashboard Generated Successfully!</strong><br>
-            All CSV files have been processed and data is embedded in this page.<br>
-            <strong>No file upload needed</strong> - just open this file in your browser anytime!
+            ✅ Dashboard generated with 27 show records • No file upload needed!
         </div>
 
-        <div class="metrics-grid" id="metricsGrid"></div>
+        <div class="tab-nav">
+            <button class="tab-btn active" data-tab="overall">📈 Overall Performance</button>
+            <button class="tab-btn" data-tab="channel">🎯 Channel Analysis</button>
+            <button class="tab-btn" data-tab="platform">💻 Platform Breakdown</button>
+            <button class="tab-btn" data-tab="shows">🎬 Show Performance</button>
+        </div>
 
-        <div class="shows-table">
-            <h2>📈 Show Performance</h2>
-            <table id="showsTable">
-                <thead>
-                    <tr>
-                        <th>Show</th>
-                        <th>Channel</th>
-                        <th>Platform</th>
-                        <th>Spend (₹)</th>
-                        <th>Trials</th>
-                        <th>CAC (₹)</th>
-                        <th>IR%</th>
-                        <th>TR%</th>
-                        <th>TCR%</th>
-                        <th>CTR%</th>
-                    </tr>
-                </thead>
-                <tbody id="showsTableBody"></tbody>
-            </table>
+        <div id="tab-overall" class="tab-content active">
+            <div class="metrics-grid" id="metricsGrid"></div>
+        </div>
+
+        <div id="tab-channel" class="tab-content">
+            <div class="chart-section">
+                <div class="chart-title">📊 Channel Performance: Meta vs Google</div>
+                <div class="chart-container">
+                    <canvas id="channelChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-platform" class="tab-content">
+            <div class="chart-section">
+                <div class="chart-title">💻 Platform Performance: App vs Web</div>
+                <div class="chart-container">
+                    <canvas id="platformChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-shows" class="tab-content">
+            <div class="shows-table">
+                <div class="chart-title">📈 Show Performance Details</div>
+                <table id="showsTable">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable(0)">Show ↕</th>
+                            <th onclick="sortTable(1)">Channel ↕</th>
+                            <th onclick="sortTable(2)">Platform ↕</th>
+                            <th onclick="sortTable(3)">Spend (₹) ↕</th>
+                            <th onclick="sortTable(4)">Trials ↕</th>
+                            <th onclick="sortTable(5)">CAC (₹) ↕</th>
+                            <th onclick="sortTable(6)">IR% ↕</th>
+                            <th onclick="sortTable(7)">TR% ↕</th>
+                            <th onclick="sortTable(8)">TCR% ↕</th>
+                            <th onclick="sortTable(9)">CTR% ↕</th>
+                        </tr>
+                    </thead>
+                    <tbody id="showsTableBody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script>
-        // EMBEDDED DATA - Generated from your CSV files
         const DATA = [
         {
                 "show": "Saanwari",
@@ -401,55 +442,50 @@
                 "ctr": 0.94
         }
 ];
+        let currentSortCol = 4; // Default sort by trials
+        let sortAsc = false;
 
-        // Calculate overall metrics
         function calculateMetrics(data) {
             const totalSpend = data.reduce((sum, row) => sum + row.spend, 0);
             const totalTrials = data.reduce((sum, row) => sum + row.trials, 0);
             const avgCAC = totalTrials > 0 ? (totalSpend / totalTrials) : 0;
-
-            // Weighted averages for percentages
             const totalIR = data.reduce((sum, row) => sum + (row.ir * row.trials), 0);
             const totalTR = data.reduce((sum, row) => sum + (row.tr * row.trials), 0);
             const totalTCR = data.reduce((sum, row) => sum + (row.tcr * row.trials), 0);
             const totalCTR = data.reduce((sum, row) => sum + (row.ctr * row.spend), 0);
-
             const avgIR = totalTrials > 0 ? (totalIR / totalTrials) : 0;
             const avgTR = totalTrials > 0 ? (totalTR / totalTrials) : 0;
             const avgTCR = totalTrials > 0 ? (totalTCR / totalTrials) : 0;
             const avgCTR = totalSpend > 0 ? (totalCTR / totalSpend) : 0;
-
-            return {
-                totalSpend: totalSpend.toFixed(0),
-                totalTrials,
-                cac: avgCAC.toFixed(2),
-                ir: avgIR.toFixed(2),
-                tr: avgTR.toFixed(2),
-                tcr: avgTCR.toFixed(2),
-                ctr: avgCTR.toFixed(2)
-            };
+            return { totalSpend, totalTrials, cac: avgCAC, ir: avgIR, tr: avgTR, tcr: avgTCR, ctr: avgCTR };
         }
 
-        function formatCurrency(num) {
-            return '₹' + parseFloat(num).toLocaleString('en-IN');
+        function calculateChannelMetrics(data, channel) {
+            const filtered = data.filter(row => row.channel === channel);
+            return calculateMetrics(filtered);
         }
+
+        function calculatePlatformMetrics(data, platform) {
+            const filtered = data.filter(row => row.platform === platform);
+            return calculateMetrics(filtered);
+        }
+
+        function formatCurrency(num) { return '₹' + parseFloat(num).toLocaleString('en-IN'); }
 
         function renderMetrics() {
             const metrics = calculateMetrics(DATA);
             const grid = document.getElementById('metricsGrid');
-
             const cards = [
-                { label: 'Total Spend', value: formatCurrency(metrics.totalSpend), status: '' },
-                { label: 'Total Trials', value: metrics.totalTrials.toLocaleString(), status: '' },
-                { label: 'Average CAC', value: formatCurrency(metrics.cac), status: metrics.cac < 250 ? 'Healthy ✅' : 'Needs Attention ⚠️', healthy: metrics.cac < 250 },
-                { label: 'CTR', value: metrics.ctr + '%', status: metrics.ctr > 0.75 ? 'Healthy ✅' : 'Needs Attention ⚠️', healthy: metrics.ctr > 0.75 },
-                { label: 'Install Rate (IR)', value: metrics.ir + '%', status: metrics.ir >= 10 ? 'Healthy ✅' : 'Needs Attention ⚠️', healthy: metrics.ir >= 10 },
-                { label: 'Trial Rate (TR)', value: metrics.tr + '%', status: metrics.tr >= 20 ? 'Healthy ✅' : 'Needs Attention ⚠️', healthy: metrics.tr >= 20 },
-                { label: 'D0 TCR', value: metrics.tcr + '%', status: metrics.tcr < 30 ? 'Healthy ✅' : 'Needs Attention ⚠️', healthy: metrics.tcr < 30 }
+                { label: 'Total Spend', value: formatCurrency(metrics.totalSpend), status: '', healthy: true },
+                { label: 'Total Trials', value: metrics.totalTrials.toLocaleString(), status: '', healthy: true },
+                { label: 'Average CAC', value: formatCurrency(metrics.cac.toFixed(2)), status: metrics.cac < 250 ? 'Healthy ✅' : 'Needs Attention ⚠️', healthy: metrics.cac < 250 },
+                { label: 'CTR', value: metrics.ctr.toFixed(2) + '%', status: metrics.ctr > 0.75 ? 'Healthy ✅' : 'Needs Attention ⚠️', healthy: metrics.ctr > 0.75 },
+                { label: 'Install Rate (IR)', value: metrics.ir.toFixed(2) + '%', status: metrics.ir >= 10 ? 'Healthy ✅' : 'Needs Attention ⚠️', healthy: metrics.ir >= 10 },
+                { label: 'Trial Rate (TR)', value: metrics.tr.toFixed(2) + '%', status: metrics.tr >= 20 ? 'Healthy ✅' : 'Needs Attention ⚠️', healthy: metrics.tr >= 20 },
+                { label: 'D0 TCR', value: metrics.tcr.toFixed(2) + '%', status: metrics.tcr < 30 ? 'Healthy ✅' : 'Needs Attention ⚠️', healthy: metrics.tcr < 30 }
             ];
-
             grid.innerHTML = cards.map(card => `
-                <div class="metric-card">
+                <div class="metric-card ${card.healthy ? 'healthy' : 'unhealthy'}">
                     <div class="metric-label">${card.label}</div>
                     <div class="metric-value">${card.value}</div>
                     ${card.status ? `<div class="metric-status ${card.healthy ? 'healthy' : 'unhealthy'}">${card.status}</div>` : ''}
@@ -457,17 +493,52 @@
             `).join('');
         }
 
+        function renderChannelChart() {
+            const meta = calculateChannelMetrics(DATA, 'meta');
+            const google = calculateChannelMetrics(DATA, 'google');
+            const ctx = document.getElementById('channelChart');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Spend (₹)', 'Trials', 'CAC (₹)', 'CTR%', 'IR%', 'TR%', 'TCR%'],
+                    datasets: [
+                        { label: 'Meta', data: [meta.totalSpend, meta.totalTrials, meta.cac, meta.ctr, meta.ir, meta.tr, meta.tcr], backgroundColor: '#3b82f6' },
+                        { label: 'Google', data: [google.totalSpend, google.totalTrials, google.cac, google.ctr, google.ir, google.tr, google.tcr], backgroundColor: '#10b981' }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+            });
+        }
+
+        function renderPlatformChart() {
+            const app = calculatePlatformMetrics(DATA, 'app');
+            const web = calculatePlatformMetrics(DATA, 'web');
+            const ctx = document.getElementById('platformChart');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Spend (₹)', 'Trials', 'CAC (₹)', 'CTR%', 'IR%', 'TR%', 'TCR%'],
+                    datasets: [
+                        { label: 'App', data: [app.totalSpend, app.totalTrials, app.cac, app.ctr, app.ir, app.tr, app.tcr], backgroundColor: '#8b5cf6' },
+                        { label: 'Web', data: [web.totalSpend, web.totalTrials, web.cac, web.ctr, web.ir, web.tr, web.tcr], backgroundColor: '#f97316' }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+            });
+        }
+
         function renderTable() {
             const tbody = document.getElementById('showsTableBody');
-
-            // Sort by trials descending
-            const sortedData = [...DATA].sort((a, b) => b.trials - a.trials);
-
-            tbody.innerHTML = sortedData.map(row => `
+            const sorted = [...DATA].sort((a, b) => {
+                const aVal = [a.show, a.channel, a.platform, a.spend, a.trials, a.cac, a.ir, a.tr, a.tcr, a.ctr][currentSortCol];
+                const bVal = [b.show, b.channel, b.platform, b.spend, b.trials, b.cac, b.ir, b.tr, b.tcr, b.ctr][currentSortCol];
+                return sortAsc ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
+            });
+            tbody.innerHTML = sorted.map(row => `
                 <tr>
                     <td><strong>${row.show}</strong></td>
                     <td><span class="channel-badge channel-${row.channel}">${row.channel}</span></td>
-                    <td><span class="platform-${row.platform}">${row.platform}</span></td>
+                    <td>${row.platform}</td>
                     <td>${formatCurrency(row.spend)}</td>
                     <td>${row.trials.toLocaleString()}</td>
                     <td>${formatCurrency(row.cac)}</td>
@@ -479,10 +550,25 @@
             `).join('');
         }
 
-        // Initialize dashboard
+        function sortTable(col) {
+            if (currentSortCol === col) sortAsc = !sortAsc;
+            else { currentSortCol = col; sortAsc = false; }
+            renderTable();
+        }
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                e.target.classList.add('active');
+                document.getElementById('tab-' + e.target.dataset.tab).classList.add('active');
+                if (e.target.dataset.tab === 'channel') renderChannelChart();
+                if (e.target.dataset.tab === 'platform') renderPlatformChart();
+            });
+        });
+
         renderMetrics();
         renderTable();
-
         console.log('✅ Dashboard loaded with', DATA.length, 'shows');
     </script>
 </body>
