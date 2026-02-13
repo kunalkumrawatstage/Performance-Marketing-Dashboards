@@ -20,6 +20,17 @@ def clean_number(value):
     except:
         return 0
 
+def get_column_value(row, *possible_names):
+    """Get column value with case-insensitive matching"""
+    # Create a lowercase key map
+    key_map = {k.lower(): k for k in row.keys()}
+
+    for name in possible_names:
+        lower_name = name.lower()
+        if lower_name in key_map:
+            return row[key_map[lower_name]]
+    return None
+
 def parse_csv_file(filepath, filename):
     """Parse a CSV file and extract show data"""
     data = []
@@ -27,10 +38,11 @@ def parse_csv_file(filepath, filename):
     with open(filepath, 'r', encoding='utf-8') as f:
         lines = f.readlines()
 
-        # Find the header row
+        # Find the header row (case-insensitive)
         header_idx = None
         for i, line in enumerate(lines):
-            if 'Spends_GST' in line or 'showname' in line or 'Grouped Showname' in line:
+            line_lower = line.lower()
+            if 'spends_gst' in line_lower or 'showname' in line_lower or 'grouped showname' in line_lower:
                 header_idx = i
                 break
 
@@ -52,43 +64,39 @@ def parse_csv_file(filepath, filename):
 
         for row in reader:
             # Get show name from various possible columns
-            show_name = (row.get('Grouped Showname') or
-                        row.get('Show_Name - APP') or
-                        row.get('Show_Name') or
-                        row.get('showname') or
-                        row.get('show') or '').strip()
+            show_name = (get_column_value(row, 'Grouped Showname', 'Show_Name - APP', 'Show_Name', 'showname', 'show') or '').strip()
 
             # Skip empty rows
             if not show_name or 'Week' in show_name or show_name == 'Grand Total':
                 continue
 
-            # Extract metrics
-            spend = clean_number(row.get('Spends_GST', 0))
+            # Extract metrics with case-insensitive column matching
+            spend = clean_number(get_column_value(row, 'Spends_GST', 'Spends_gst', 'Spend') or 0)
 
             if is_meta and not is_web:
                 # Meta App file - check for both column name variations
-                trials = int(clean_number(row.get('af_start_trial_uni') or row.get('af_start_trial', 0)))
-                cac = clean_number(row.get('Mandate_CAC', 0))
-                ir = clean_number(row.get('AF_IR%', 0))
-                tr = clean_number(row.get('TR%_AF', 0))
-                tcr = clean_number(row.get('TCR_D0', 0))
-                ctr = clean_number(row.get('CTR', 0))
+                trials = int(clean_number(get_column_value(row, 'af_start_trial_uni', 'af_start_trial', 'Trials') or 0))
+                cac = clean_number(get_column_value(row, 'Mandate_CAC', 'CAC') or 0)
+                ir = clean_number(get_column_value(row, 'AF_IR%', 'IR%') or 0)
+                tr = clean_number(get_column_value(row, 'TR%_AF', 'TR%') or 0)
+                tcr = clean_number(get_column_value(row, 'TCR_D0', 'TCR%') or 0)
+                ctr = clean_number(get_column_value(row, 'CTR', 'CTR%') or 0)
             elif is_meta and is_web:
                 # Meta Web file
-                trials = int(clean_number(row.get('Trial_web') or row.get('af_start_trial_uni', 0)))
-                cac = clean_number(row.get('Mandate_CAC', 0))
+                trials = int(clean_number(get_column_value(row, 'Trial_web', 'af_start_trial_uni', 'Trials') or 0))
+                cac = clean_number(get_column_value(row, 'Mandate_CAC', 'CAC') or 0)
                 ir = 0
                 tr = 0
-                tcr = clean_number(row.get('TCR_D0', 0))
-                ctr = clean_number(row.get('CTR', 0))
+                tcr = clean_number(get_column_value(row, 'TCR_D0', 'TCR%') or 0)
+                ctr = clean_number(get_column_value(row, 'CTR', 'CTR%') or 0)
             else:
                 # Google file
-                cac = clean_number(row.get('CP_AF_CPT_D0', 0))
+                cac = clean_number(get_column_value(row, 'CP_AF_CPT_D0', 'CAC') or 0)
                 trials = int(spend / cac) if cac > 0 else 0
-                ir = clean_number(row.get('AF_IR%', 0))
-                tr = clean_number(row.get('AF_TR%', 0))
-                tcr = clean_number(row.get('AF_TCR%', 0))
-                ctr = clean_number(row.get('CTR', 0))
+                ir = clean_number(get_column_value(row, 'AF_IR%', 'IR%') or 0)
+                tr = clean_number(get_column_value(row, 'AF_TR%', 'TR%') or 0)
+                tcr = clean_number(get_column_value(row, 'AF_TCR%D0', 'AF_TCR%', 'TCR%') or 0)
+                ctr = clean_number(get_column_value(row, 'CTR', 'CTR%') or 0)
 
             if spend > 0 or trials > 0:
                 data.append({

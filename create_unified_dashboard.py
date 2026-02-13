@@ -24,13 +24,6 @@ def main():
         import subprocess
         subprocess.run(["python3", "generate_dashboard.py"], check=True)
 
-    # Load Haryanvi data
-    hr_json = base_path / "hr_data.json"
-    if hr_json.exists():
-        with open(hr_json, 'r') as f:
-            markets['haryanvi'] = json.load(f)
-        print(f"✅ Loaded Haryanvi: {len(markets['haryanvi'])} shows")
-
     # Load Gujarati data from generated dashboard
     dashboard_gen = base_path / "dashboard_generated.html"
     if dashboard_gen.exists():
@@ -42,6 +35,18 @@ def main():
             if match:
                 markets['gujarati'] = json.loads(match.group(1))
                 print(f"✅ Loaded Gujarati: {len(markets['gujarati'])} shows")
+
+    # Load Haryanvi data from generated dashboard
+    dashboard_hr = base_path / "dashboard_haryanvi.html"
+    if dashboard_hr.exists():
+        import re
+        with open(dashboard_hr, 'r') as f:
+            content = f.read()
+            # Extract DATA array from JavaScript
+            match = re.search(r'const DATA = (\[.*?\]);', content, re.DOTALL)
+            if match:
+                markets['haryanvi'] = json.loads(match.group(1))
+                print(f"✅ Loaded Haryanvi: {len(markets['haryanvi'])} shows")
 
     if not markets:
         print("\n❌ No market data found!")
