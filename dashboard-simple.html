@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GJ Performance Dashboard - Simple & Working</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .upload-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .drop-zone {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            background-color: #f8f9ff;
+        }
+
+        .drop-zone.dragover {
+            background-color: #e0e7ff;
+            border-color: #764ba2;
+            transform: scale(1.02);
+        }
+
+        .drop-zone:hover {
+            border-color: #764ba2;
+        }
+
+        .drop-zone input[type="file"] {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 20px;
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            color: #999;
+            font-size: 14px;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .status.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+
+        .file-list {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: none;
+        }
+
+        .file-list.active {
+            display: block;
+        }
+
+        .file-list h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .file-item {
+            padding: 10px;
+            background-color: #f8f9ff;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-item .filename {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .file-item .status-badge {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .file-item .status-badge.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .dashboard {
+            display: none;
+        }
+
+        .dashboard.active {
+            display: block;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .metric-card h3 {
+            color: #666;
+            font-size: 14px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .metric-card .value {
+            color: #667eea;
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .metric-card .label {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .shows-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .show-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .show-card h3 {
+            color: #667eea;
+            font-size: 22px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .show-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .show-metric {
+            background-color: #f8f9ff;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .show-metric .label {
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .show-metric .value {
+            color: #333;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .debug-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .debug-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .debug-log {
+            background-color: #f4f4f4;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GJ Performance Dashboard - Simple & Working</h1>
+
+        <div class="upload-section">
+            <div class="drop-zone" id="dropZone">
+                <div class="upload-icon">📊</div>
+                <div class="upload-text">Drag and Drop CSV Files Here</div>
+                <div class="upload-hint">or click to browse - Supports multiple CSV files</div>
+                <input type="file" id="fileInput" multiple accept=".csv">
+            </div>
+            <div id="status" class="status"></div>
+        </div>
+
+        <div id="fileList" class="file-list">
+            <h3>Loaded Files</h3>
+            <div id="fileListContent"></div>
+        </div>
+
+        <div id="dashboard" class="dashboard">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <h3>Total Spend</h3>
+                    <div class="value" id="totalSpend">₹0</div>
+                    <div class="label">INR</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Total Trials</h3>
+                    <div class="value" id="totalTrials">0</div>
+                    <div class="label">All Shows</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Average CAC</h3>
+                    <div class="value" id="avgCAC">₹0</div>
+                    <div class="label">INR per Trial</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Shows</h3>
+                    <div class="value" id="totalShows">0</div>
+                    <div class="label">Active Shows</div>
+                </div>
+            </div>
+
+            <div id="showsGrid" class="shows-grid"></div>
+        </div>
+
+        <div id="debugSection" class="debug-section">
+            <h3>Debug Log</h3>
+            <button onclick="toggleDebug()">Show/Hide Debug</button>
+            <div id="debugLog" class="debug-log" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Debug logging
+        let debugMessages = [];
+        function debugLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            debugMessages.push(`[${timestamp}] ${message}`);
+            const debugLogElement = document.getElementById('debugLog');
+            if (debugLogElement) {
+                debugLogElement.textContent = debugMessages.join('\n');
+            }
+            console.log(message);
+        }
+
+        function toggleDebug() {
+            const debugLog = document.getElementById('debugLog');
+            debugLog.style.display = debugLog.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Show status message
+        function showStatus(message, type = 'info') {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+            debugLog(`Status [${type}]: ${message}`);
+        }
+
+        // Parse CSV content
+        function parseCSV(content) {
+            const lines = content.split('\n');
+            const result = [];
+
+            for (let line of lines) {
+                if (!line.trim()) continue;
+
+                const fields = [];
+                let currentField = '';
+                let inQuotes = false;
+
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        fields.push(currentField.trim());
+                        currentField = '';
+                    } else {
+                        currentField += char;
+                    }
+                }
+                fields.push(currentField.trim());
+                result.push(fields);
+            }
+
+            debugLog(`Parsed ${result.length} rows`);
+            return result;
+        }
+
+        // Extract show data from parsed CSV
+        function extractShowData(parsedData, fileName) {
+            debugLog(`\n--- Parsing file: ${fileName} ---`);
+            const shows = [];
+            let headerRow = null;
+            let currentWeek = '';
+
+            for (let i = 0; i < parsedData.length; i++) {
+                const row = parsedData[i];
+
+                // Check for week range
+                if (row[1] && (row[1].includes('Week') || row[1].includes('week'))) {
+                    currentWeek = row[1];
+                    debugLog(`Found week: ${currentWeek}`);
+                }
+
+                // Look for header row
+                const firstCell = row[0] ? row[0].toLowerCase() : '';
+                if (firstCell.includes('show_name') || firstCell === 'showname') {
+                    headerRow = row;
+                    debugLog(`Found header at row ${i}: ${row.slice(0, 5).join(', ')}`);
+                    continue;
+                }
+
+                // Extract show data if we have a header
+                if (headerRow && row[0] && row[0].trim() !== '') {
+                    const showName = row[0].trim();
+
+                    // Skip non-data rows
+                    if (showName.includes('Grand Total') ||
+                        showName.includes('Insights') ||
+                        showName.includes('Week_range') ||
+                        showName.includes('Stage TAM') ||
+                        showName.includes('PAN IND') ||
+                        showName === '' ||
+                        showName.startsWith(',')) {
+                        continue;
+                    }
+
+                    // Column indices (flexible)
+                    let spendIndex = 1;  // Usually column 1
+                    let trialIndex = 2;  // Usually column 2
+
+                    // Extract values
+                    const spendsRaw = row[spendIndex] ? row[spendIndex].replace(/,/g, '') : '0';
+                    const trialsRaw = row[trialIndex] ? row[trialIndex].replace(/,/g, '') : '0';
+
+                    const spends = parseFloat(spendsRaw) || 0;
+                    const trials = parseFloat(trialsRaw) || 0;
+
+                    // Only add if we have valid data
+                    if (spends > 0 || trials > 0) {
+                        const showData = {
+                            fileName: fileName,
+                            week: currentWeek,
+                            showName: showName,
+                            spends: spends,
+                            trials: trials,
+                            cac: trials > 0 ? spends / trials : 0
+                        };
+
+                        shows.push(showData);
+                        debugLog(`  Extracted: ${showName} - Spends: ₹${spends}, Trials: ${trials}`);
+                    }
+                }
+            }
+
+            debugLog(`Total shows extracted from ${fileName}: ${shows.length}`);
+            return shows;
+        }
+
+        // Process uploaded files
+        async function processFiles(files) {
+            debugLog('\n=== Starting file processing ===');
+
+            const fileListContent = document.getElementById('fileListContent');
+            fileListContent.innerHTML = '';
+            document.getElementById('fileList').classList.add('active');
+
+            showStatus(`Processing ${files.length} file(s)...`, 'info');
+
+            let allShows = [];
+            let processedCount = 0;
+            let errorCount = 0;
+
+            for (const file of files) {
+                try {
+                    debugLog(`\nReading file: ${file.name}`);
+
+                    const text = await file.text();
+                    const parsed = parseCSV(text);
+
+                    debugLog(`Parsed ${parsed.length} rows from ${file.name}`);
+
+                    const shows = extractShowData(parsed, file.name);
+                    allShows = allShows.concat(shows);
+
+                    // Add to file list
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    fileItem.innerHTML = `
+                        <span class="filename">${file.name}</span>
+                        <span class="status-badge success">✓ ${shows.length} shows</span>
+                    `;
+                    fileListContent.appendChild(fileItem);
+
+                    processedCount++;
+                } catch (error) {
+                    debugLog(`ERROR processing ${file.name}: ${error.message}`);
+                    errorCount++;
+
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    fileItem.innerHTML = `
+                        <span class="filename">${file.name}</span>
+                        <span class="status-badge error">✗ Error</span>
+                    `;
+                    fileListContent.appendChild(fileItem);
+                }
+            }
+
+            if (allShows.length === 0) {
+                showStatus('No data could be extracted from the files. Please check the debug log.', 'error');
+                return;
+            }
+
+            // Aggregate data by show name
+            const showsMap = {};
+            for (const show of allShows) {
+                if (!showsMap[show.showName]) {
+                    showsMap[show.showName] = {
+                        showName: show.showName,
+                        spends: 0,
+                        trials: 0,
+                        sources: []
+                    };
+                }
+                showsMap[show.showName].spends += show.spends;
+                showsMap[show.showName].trials += show.trials;
+                showsMap[show.showName].sources.push(show.fileName);
+            }
+
+            const aggregatedShows = Object.values(showsMap);
+            debugLog(`\nAggregated into ${aggregatedShows.length} unique shows`);
+
+            // Update dashboard
+            updateDashboard(aggregatedShows);
+            showStatus(`✓ Successfully loaded ${processedCount} file(s) with ${allShows.length} data points!`, 'success');
+        }
+
+        // Update dashboard with data
+        function updateDashboard(shows) {
+            const totalSpend = shows.reduce((sum, show) => sum + show.spends, 0);
+            const totalTrials = shows.reduce((sum, show) => sum + show.trials, 0);
+            const avgCAC = totalTrials > 0 ? totalSpend / totalTrials : 0;
+
+            // Update summary metrics
+            document.getElementById('totalSpend').textContent = '₹' + totalSpend.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+            document.getElementById('totalTrials').textContent = totalTrials.toLocaleString('en-IN');
+            document.getElementById('avgCAC').textContent = '₹' + avgCAC.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+            document.getElementById('totalShows').textContent = shows.length;
+
+            // Update shows grid
+            const showsGrid = document.getElementById('showsGrid');
+            showsGrid.innerHTML = '';
+
+            // Sort shows by spend (descending)
+            shows.sort((a, b) => b.spends - a.spends);
+
+            for (const show of shows) {
+                const cac = show.trials > 0 ? show.spends / show.trials : 0;
+
+                const showCard = document.createElement('div');
+                showCard.className = 'show-card';
+                showCard.innerHTML = `
+                    <h3>${show.showName}</h3>
+                    <div class="show-metrics">
+                        <div class="show-metric">
+                            <div class="label">Total Spend</div>
+                            <div class="value">₹${show.spends.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</div>
+                        </div>
+                        <div class="show-metric">
+                            <div class="label">Trials</div>
+                            <div class="value">${show.trials.toLocaleString('en-IN')}</div>
+                        </div>
+                        <div class="show-metric">
+                            <div class="label">CAC</div>
+                            <div class="value">₹${cac.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</div>
+                        </div>
+                        <div class="show-metric">
+                            <div class="label">Sources</div>
+                            <div class="value" style="font-size: 14px;">${[...new Set(show.sources)].join(', ')}</div>
+                        </div>
+                    </div>
+                `;
+                showsGrid.appendChild(showCard);
+            }
+
+            // Show dashboard
+            document.getElementById('dashboard').classList.add('active');
+
+            debugLog('\n=== Dashboard Updated Successfully ===');
+            debugLog(`Total Spend: ₹${totalSpend.toLocaleString('en-IN')}`);
+            debugLog(`Total Trials: ${totalTrials.toLocaleString('en-IN')}`);
+            debugLog(`Average CAC: ₹${avgCAC.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`);
+            debugLog(`Number of Shows: ${shows.length}`);
+        }
+
+        // Drag and drop functionality
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+
+        dropZone.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+
+            const files = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.csv'));
+            if (files.length > 0) {
+                processFiles(files);
+            } else {
+                showStatus('Please drop CSV files only', 'error');
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length > 0) {
+                processFiles(files);
+            }
+        });
+
+        // Initialize
+        debugLog('Dashboard initialized and ready');
+        debugLog('Waiting for CSV files...');
+    </script>
+</body>
+</html>
