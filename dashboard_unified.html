@@ -50,9 +50,23 @@
         th:hover { background: #e5e7eb; }
         td { padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
         tr:hover { background: #f9fafb; }
-        .channel-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
-        .channel-meta { background: #dbeafe; color: #1e40af; }
-        .channel-google { background: #d1fae5; color: #065f46; }
+        .channel-badge { display: inline-block; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .channel-meta { background: #0866FF; color: white; }
+        .channel-google { background: #34A853; color: white; }
+
+        .platform-badge { display: inline-block; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .platform-app { background: #8b5cf6; color: white; }
+        .platform-web { background: #f97316; color: white; }
+
+        .metric-healthy { background: #d1fae5; color: #065f46; font-weight: 600; }
+        .metric-warning { background: #fef3c7; color: #92400e; font-weight: 600; }
+        .metric-critical { background: #fee2e2; color: #991b1b; font-weight: 600; }
+
+        .action-badge { display: inline-block; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        .action-scale { background: #d1fae5; color: #065f46; }
+        .action-kill { background: #fee2e2; color: #991b1b; }
+        .action-optimize { background: #fef3c7; color: #92400e; }
+        .action-monitor { background: #e0e7ff; color: #3730a3; }
 
         .insight-card { background: white; border-radius: 10px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-left: 5px solid #2563eb; }
         .insight-card.high { border-left-color: #ef4444; }
@@ -132,6 +146,7 @@
                             <th onclick="sortTable(7)">TR% ↕</th>
                             <th onclick="sortTable(8)">TCR% ↕</th>
                             <th onclick="sortTable(9)">CTR% ↕</th>
+                            <th onclick="sortTable(10)">Action ↕</th>
                         </tr>
                     </thead>
                     <tbody id="showsTableBody"></tbody>
@@ -1238,28 +1253,82 @@
             `).join('');
         }
 
+        function getMetricClass(metric, value) {
+            if (metric === 'cac') {
+                if (value < 250) return 'metric-healthy';
+                if (value < 350) return 'metric-warning';
+                return 'metric-critical';
+            }
+            if (metric === 'tcr') {
+                if (value < 30) return 'metric-healthy';
+                if (value < 40) return 'metric-warning';
+                return 'metric-critical';
+            }
+            if (metric === 'ctr') {
+                if (value > 0.75) return 'metric-healthy';
+                if (value > 0.5) return 'metric-warning';
+                return 'metric-critical';
+            }
+            if (metric === 'ir') {
+                return value >= 10 ? 'metric-healthy' : 'metric-critical';
+            }
+            if (metric === 'tr') {
+                return value >= 20 ? 'metric-healthy' : 'metric-critical';
+            }
+            return '';
+        }
+
+        function getActionInsight(row) {
+            // Scale: Good CAC, good volume, good retention
+            if (row.cac < 250 && row.trials > 100 && row.tcr < 30) {
+                return { text: 'Scale', class: 'action-scale' };
+            }
+
+            // Kill: Very poor performance
+            if (row.cac > 400 || (row.trials > 50 && row.tcr > 40)) {
+                return { text: 'Kill', class: 'action-kill' };
+            }
+
+            // Optimize: Needs improvement
+            if ((row.cac >= 250 && row.cac <= 400) || (row.tcr >= 30 && row.tcr <= 40)) {
+                return { text: 'Optimize', class: 'action-optimize' };
+            }
+
+            // Monitor: Too early to judge
+            if (row.trials < 50) {
+                return { text: 'Monitor', class: 'action-monitor' };
+            }
+
+            // Default
+            return { text: 'Monitor', class: 'action-monitor' };
+        }
+
         function renderTable() {
             const data = getCurrentData();
             const tbody = document.getElementById('showsTableBody');
             const sorted = [...data].sort((a, b) => {
-                const aVal = [a.show, a.channel, a.platform, a.spend, a.trials, a.cac, a.ir, a.tr, a.tcr, a.ctr][currentSortCol];
-                const bVal = [b.show, b.channel, b.platform, b.spend, b.trials, b.cac, b.ir, b.tr, b.tcr, b.ctr][currentSortCol];
+                const aVal = [a.show, a.channel, a.platform, a.spend, a.trials, a.cac, a.ir, a.tr, a.tcr, a.ctr, 0][currentSortCol];
+                const bVal = [b.show, b.channel, b.platform, b.spend, b.trials, b.cac, b.ir, b.tr, b.tcr, b.ctr, 0][currentSortCol];
                 return sortAsc ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
             });
-            tbody.innerHTML = sorted.map(row => `
+            tbody.innerHTML = sorted.map(row => {
+                const action = getActionInsight(row);
+                return `
                 <tr>
                     <td><strong>${row.show}</strong></td>
                     <td><span class="channel-badge channel-${row.channel}">${row.channel}</span></td>
-                    <td>${row.platform}</td>
+                    <td><span class="platform-badge platform-${row.platform}">${row.platform}</span></td>
                     <td>${formatCurrency(row.spend)}</td>
                     <td>${row.trials.toLocaleString()}</td>
-                    <td>${formatCurrency(row.cac)}</td>
-                    <td>${row.ir}%</td>
-                    <td>${row.tr}%</td>
-                    <td>${row.tcr}%</td>
-                    <td>${row.ctr}%</td>
+                    <td class="${getMetricClass('cac', row.cac)}">${formatCurrency(row.cac)}</td>
+                    <td class="${getMetricClass('ir', row.ir)}">${row.ir}%</td>
+                    <td class="${getMetricClass('tr', row.tr)}">${row.tr}%</td>
+                    <td class="${getMetricClass('tcr', row.tcr)}">${row.tcr}%</td>
+                    <td class="${getMetricClass('ctr', row.ctr)}">${row.ctr}%</td>
+                    <td><span class="action-badge ${action.class}">${action.text}</span></td>
                 </tr>
-            `).join('');
+            `;
+            }).join('');
         }
 
         function renderChannelChart() {
