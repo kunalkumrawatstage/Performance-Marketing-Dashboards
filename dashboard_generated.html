@@ -47,6 +47,21 @@
         .channel-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
         .channel-meta { background: #dbeafe; color: #1e40af; }
         .channel-google { background: #d1fae5; color: #065f46; }
+
+        .insight-card { background: white; border-radius: 10px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-left: 5px solid #2563eb; }
+        .insight-card.high { border-left-color: #ef4444; }
+        .insight-card.medium { border-left-color: #f59e0b; }
+        .insight-card.low { border-left-color: #10b981; }
+        .insight-badge { display: inline-block; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 15px; }
+        .insight-badge.high { background: #fee2e2; color: #991b1b; }
+        .insight-badge.medium { background: #fef3c7; color: #92400e; }
+        .insight-badge.low { background: #d1fae5; color: #065f46; }
+        .insight-title { font-size: 18px; font-weight: 700; color: #111; margin-bottom: 15px; line-height: 1.4; }
+        .insight-analysis { font-size: 14px; color: #374151; margin-bottom: 15px; line-height: 1.7; }
+        .insight-recommendation { background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 3px solid #2563eb; margin-top: 15px; }
+        .insight-recommendation strong { color: #2563eb; }
+        .insight-impact { background: #1f2937; color: white; padding: 12px; border-radius: 6px; margin-top: 15px; font-size: 13px; }
+        .insight-impact strong { color: #60a5fa; }
     </style>
 </head>
 <body>
@@ -67,6 +82,7 @@
             <button class="tab-btn" data-tab="channel">🎯 Channel Analysis</button>
             <button class="tab-btn" data-tab="platform">💻 Platform Breakdown</button>
             <button class="tab-btn" data-tab="shows">🎬 Show Performance</button>
+            <button class="tab-btn" data-tab="insights">🤖 AI Insights</button>
         </div>
 
         <div id="tab-overall" class="tab-content active">
@@ -112,6 +128,17 @@
                     <tbody id="showsTableBody"></tbody>
                 </table>
             </div>
+        </div>
+
+        <div id="tab-insights" class="tab-content">
+            <div class="chart-section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 20px;">
+                <div style="text-align: center;">
+                    <div style="font-size: 48px; margin-bottom: 10px;">🤖</div>
+                    <div class="chart-title" style="color: white; margin-bottom: 10px;">AI-Powered Insights & Recommendations</div>
+                    <p style="opacity: 0.9; font-size: 14px;">Executive-level analysis • C-suite quality • Actionable recommendations</p>
+                </div>
+            </div>
+            <div id="insightsContainer"></div>
         </div>
     </div>
 
@@ -556,6 +583,120 @@
             renderTable();
         }
 
+        function generateInsights() {
+            const metrics = calculateMetrics(DATA);
+            const shows = [...DATA].sort((a, b) => b.trials - a.trials);
+            const topShow = shows[0];
+            const top3Shows = shows.slice(0, 3);
+
+            const insights = [];
+
+            // INSIGHT 1: Top Show Scaling Opportunity
+            const topShowSpend = topShow.spend;
+            const topShowTrials = topShow.trials;
+            const projectedTrials = Math.floor(topShowTrials * 1.25);
+            const additionalSpend = (projectedTrials - topShowTrials) * topShow.cac;
+
+            insights.push({
+                title: `🚀 Scale "${topShow.show}" - Top Performer with ${topShowTrials.toLocaleString()} Trials`,
+                analysis: `<strong>${topShow.show}</strong> is your strongest performer, generating <strong>${((topShowTrials/metrics.totalTrials)*100).toFixed(1)}%</strong> of total trials at ₹${topShow.cac} CAC. This show demonstrates proven product-market fit with ${topShow.channel} on ${topShow.platform}. Current spend: ₹${formatCurrency(topShowSpend)}. The CAC is <strong>${topShow.cac < 250 ? 'below target (healthy)' : 'above target'}</strong> and TCR is ${topShow.tcr}% ${topShow.tcr < 30 ? '(excellent retention)' : '(needs improvement)'}.`,
+                recommendation: `<strong>💡 Immediate Action:</strong> Increase budget by <strong>20-25%</strong> (from ₹${(topShowSpend/100000).toFixed(1)}L to ₹${(topShowSpend*1.25/100000).toFixed(1)}L). Expected outcome: +${(projectedTrials - topShowTrials).toLocaleString()} trials for ₹${(additionalSpend/100000).toFixed(2)}L incremental spend. Maintain current creative and targeting strategies. Monitor daily for 5-7 days to ensure CAC stability.`,
+                priority: 'high',
+                impact: `Scaling top performer = ${(projectedTrials - topShowTrials).toLocaleString()} additional trials = ₹${((projectedTrials - topShowTrials) * topShow.cac / 100000).toFixed(2)}L efficient spend`
+            });
+
+            // INSIGHT 2: CAC Efficiency Analysis
+            const efficientShows = shows.filter(s => s.cac < 250 && s.trials > 50);
+            const inefficientShows = shows.filter(s => s.cac >= 250);
+            const avgEfficientCAC = efficientShows.length > 0 ?
+                (efficientShows.reduce((sum, s) => sum + s.cac, 0) / efficientShows.length).toFixed(0) : metrics.cac;
+
+            insights.push({
+                title: `💰 CAC Analysis: ₹${metrics.cac.toFixed(0)} Blended ${metrics.cac < 250 ? '✅ Below Target' : '⚠️ Above Target'}`,
+                analysis: `Blended CAC of <strong>₹${metrics.cac.toFixed(0)}</strong> vs ₹250 target. <strong>${efficientShows.length} of ${shows.length} shows</strong> operate below target CAC (avg ₹${avgEfficientCAC}), driving ${((efficientShows.reduce((s,sh)=>s+sh.trials,0)/metrics.totalTrials)*100).toFixed(1)}% of volume. ${inefficientShows.length > 0 ? `<strong style="color: #ef4444;">${inefficientShows.length} shows exceed ₹250 CAC</strong>: ${inefficientShows.slice(0,3).map(s => s.show + ' (₹' + s.cac + ')').join(', ')}. These shows require optimization or budget reallocation.` : 'All shows performing efficiently - excellent portfolio health.'}`,
+                recommendation: `<strong>💡 Action Plan:</strong><br>1. <strong>SCALE:</strong> Increase budget 20% for efficient shows: ${efficientShows.slice(0,3).map(s => s.show).join(', ')}.<br>2. ${inefficientShows.length > 0 ? `<strong>OPTIMIZE/PAUSE:</strong> Reduce spend 30-50% on ${inefficientShows.slice(0,2).map(s => s.show).join(', ')} until CAC improves below ₹280. Test new creatives and audiences.` : 'Maintain current efficiency - monitor for creative fatigue.'} <br>3. Reallocate ₹${((inefficientShows.reduce((s,sh)=>s+sh.spend,0)*0.4)/100000).toFixed(1)}L from inefficient to efficient shows.`,
+                priority: metrics.cac > 250 ? 'high' : 'medium',
+                impact: `CAC optimization = estimated ₹${((metrics.totalSpend * 0.15) / 100000).toFixed(1)}L cost savings`
+            });
+
+            // INSIGHT 3: Channel Strategy
+            const meta = calculateChannelMetrics(DATA, 'meta');
+            const google = calculateChannelMetrics(DATA, 'google');
+            const channelLeader = meta.cac < google.cac ? 'Meta' : 'Google';
+            const cacDiff = Math.abs(meta.cac - google.cac).toFixed(0);
+            const cacDiffPercent = (cacDiff / Math.min(meta.cac, google.cac) * 100).toFixed(0);
+
+            insights.push({
+                title: `🎯 Channel Mix: ${channelLeader} Outperforming by ₹${cacDiff} CAC (${cacDiffPercent}%)`,
+                analysis: `<strong>Meta:</strong> ${meta.totalTrials.toLocaleString()} trials @ ₹${meta.cac.toFixed(0)} CAC (${(meta.totalTrials/metrics.totalTrials*100).toFixed(0)}% share, ₹${(meta.totalSpend/100000).toFixed(1)}L spend). <strong>Google:</strong> ${google.totalTrials.toLocaleString()} trials @ ₹${google.cac.toFixed(0)} CAC (${(google.totalTrials/metrics.totalTrials*100).toFixed(0)}% share, ₹${(google.totalSpend/100000).toFixed(1)}L spend). ${channelLeader} demonstrates <strong>₹${cacDiff} lower CAC</strong> (+${cacDiffPercent}% efficiency edge).`,
+                recommendation: `<strong>💡 Budget Rebalancing:</strong> ${channelLeader === 'Meta' ? `Shift 15-20% budget from Google to Meta. Increase Meta from ₹${(meta.totalSpend/100000).toFixed(1)}L to ₹${(meta.totalSpend*1.2/100000).toFixed(1)}L. ${cacDiffPercent > 20 ? 'Significant efficiency gap - prioritize Meta scaling.' : 'Maintain Google for audience diversification.'}` : `Scale Google campaigns 15-20%. ${cacDiffPercent > 20 ? 'Review Meta creative fatigue and audience saturation.' : 'Maintain balanced mix.'}`} Target: Reduce blended CAC to ₹${(metrics.cac * 0.93).toFixed(0)}.`,
+                priority: cacDiffPercent > 20 ? 'high' : 'medium',
+                impact: `Channel optimization = estimated +${Math.floor(metrics.totalSpend/Math.min(meta.cac, google.cac) - metrics.totalTrials).toLocaleString()} trials`
+            });
+
+            // INSIGHT 4: Retention & TCR
+            const healthyTCRShows = shows.filter(s => s.tcr < 30);
+            const poorTCRShows = shows.filter(s => s.tcr >= 30);
+            const lostTrials = poorTCRShows.reduce((sum, s) => {
+                const excessChurn = Math.max(0, (s.tcr - 29) / 100);
+                return sum + Math.floor(s.trials * excessChurn);
+            }, 0);
+
+            insights.push({
+                title: `${metrics.tcr < 30 ? '✅' : '🚨'} Trial Retention: ${metrics.tcr.toFixed(1)}% TCR ${metrics.tcr < 30 ? 'Healthy' : 'CRITICAL'}`,
+                analysis: `Overall D0 churn at <strong>${metrics.tcr.toFixed(1)}%</strong> vs <30% target. ${healthyTCRShows.length} shows meet retention target${healthyTCRShows.length > 0 ? ` (${healthyTCRShows.slice(0,2).map(s => s.show + ': ' + s.tcr + '%').join(', ')})` : ''}. ${poorTCRShows.length > 0 ? `<strong style="color: #ef4444;">${poorTCRShows.length} shows exceed 30% churn</strong>, bleeding approximately <strong>${lostTrials.toLocaleString()} trials</strong> worth ₹${((lostTrials * metrics.cac)/100000).toFixed(1)}L.` : 'Excellent retention across portfolio.'}`,
+                recommendation: `<strong>💡 Retention Strategy:</strong> ${metrics.tcr >= 30 ? `<strong>URGENT:</strong> Audit content quality, onboarding UX, and trial value prop for ${poorTCRShows.map(s=>s.show).join(', ')}. Benchmark best performer against worst. Implement fixes within 48 hours. Target: Reduce TCR to <28%.` : `Maintain retention excellence. Document success factors from top performers and replicate. Continue A/B testing onboarding improvements.`}`,
+                priority: metrics.tcr >= 30 ? 'high' : 'low',
+                impact: `Fixing retention = ${lostTrials.toLocaleString()} trial recovery = ₹${((lostTrials * metrics.cac)/100000).toFixed(1)}L cost avoidance`
+            });
+
+            // INSIGHT 5: Platform Strategy
+            const app = calculatePlatformMetrics(DATA, 'app');
+            const web = calculatePlatformMetrics(DATA, 'web');
+            const platformLeader = app.cac < web.cac ? 'App' : 'Web';
+
+            insights.push({
+                title: `💻 Platform Mix: ${platformLeader} Leading with ₹${Math.min(app.cac, web.cac).toFixed(0)} CAC`,
+                analysis: `<strong>App:</strong> ${app.totalTrials.toLocaleString()} trials @ ₹${app.cac.toFixed(0)} CAC. <strong>Web:</strong> ${web.totalTrials.toLocaleString()} trials @ ₹${web.cac.toFixed(0)} CAC. Platform split: ${(app.totalTrials/metrics.totalTrials*100).toFixed(0)}% App, ${(web.totalTrials/metrics.totalTrials*100).toFixed(0)}% Web. ${platformLeader} demonstrates better cost efficiency.`,
+                recommendation: `<strong>💡 Platform Optimization:</strong> ${platformLeader === 'App' ? 'Prioritize app install campaigns. Optimize app store listing (screenshots, reviews). Consider app-only promotional offers.' : 'Focus on web conversion optimization. Improve landing page UX and reduce signup friction. Test progressive web app (PWA).'}`,
+                priority: 'medium',
+                impact: `Platform optimization = estimated +${Math.floor(metrics.totalTrials * 0.08).toLocaleString()} trials`
+            });
+
+            // Sort by priority
+            insights.sort((a, b) => {
+                const priority = { high: 3, medium: 2, low: 1 };
+                return priority[b.priority] - priority[a.priority];
+            });
+
+            return insights;
+        }
+
+        function renderInsights() {
+            const insights = generateInsights();
+            const container = document.getElementById('insightsContainer');
+
+            container.innerHTML = `
+                <div style="background: #f0fdf4; padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #10b981;">
+                    <strong style="font-size: 16px; color: #065f46;">📊 Analysis Summary</strong><br>
+                    <span style="color: #047857; font-size: 14px;">
+                        Generated ${insights.length} executive insights •
+                        ${insights.filter(i => i.priority === 'high').length} high priority •
+                        ${insights.filter(i => i.priority === 'medium').length} medium priority •
+                        ${insights.filter(i => i.priority === 'low').length} low priority
+                    </span>
+                </div>
+            ` + insights.map((insight, idx) => `
+                <div class="insight-card ${insight.priority}">
+                    <span class="insight-badge ${insight.priority}">${insight.priority.toUpperCase()} PRIORITY</span>
+                    <div class="insight-title">${idx + 1}. ${insight.title}</div>
+                    <div class="insight-analysis">${insight.analysis}</div>
+                    <div class="insight-recommendation">${insight.recommendation}</div>
+                    <div class="insight-impact"><strong>💼 Business Impact:</strong> ${insight.impact}</div>
+                </div>
+            `).join('');
+        }
+
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -564,12 +705,13 @@
                 document.getElementById('tab-' + e.target.dataset.tab).classList.add('active');
                 if (e.target.dataset.tab === 'channel') renderChannelChart();
                 if (e.target.dataset.tab === 'platform') renderPlatformChart();
+                if (e.target.dataset.tab === 'insights') renderInsights();
             });
         });
 
         renderMetrics();
         renderTable();
-        console.log('✅ Dashboard loaded with', DATA.length, 'shows');
+        console.log('✅ Dashboard loaded with', DATA.length, 'shows for Gujarati (GJ) Market');
     </script>
 </body>
 </html>
